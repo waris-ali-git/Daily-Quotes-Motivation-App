@@ -4,7 +4,7 @@
 # PHASE 1: Basic App (Pehla Hafte)
 ## Day 1-2: Shuruat
 ### 1. Flutter project banao
-     Terminal: flutter create quotes_app
+     Terminal: flutter create daily_quotes_motivation_app
 
 ### 2. pubspec.yaml mein packages add karo:
     - http (internet se data lene ke liye)
