@@ -19,7 +19,7 @@ class ApiService {
         }
         throw Exception('API returned empty list');
       } else {
-        throw Exception('Failed to load quote: ${response.statusCode}');
+        throw Exception('Failed: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error fetching quote: $e');
