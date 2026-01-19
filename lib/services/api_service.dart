@@ -53,15 +53,11 @@ class ApiService {
       '1470071459604-3b5ec3a7fe05', // Foggy Forest
       '1441974231531-c6227db76b6e', // Sunlight Woods
       '1426604966848-d7adac402bff', // Water/Nature
-    ],
-    'success': [
       '1522202176988-66273c2fd55f', // Planning/Desk
       '1486406146926-c627a92ad1ab', // Skyscrapers
       '1507525428034-b723cf961d3e', // Road trip
       '1552664730-d307ca884978', // Teamwork
       '1434030216411-0b793f4b4173', // Study/Library
-    ],
-    'love': [
       '1474552226712-ac0f0961a954', // Sunset Hands
       '1494774157365-9e04c6720e47', // Cinematic Flowers
     ],
