@@ -53,9 +53,6 @@ class ApiService {
       '1470071459604-3b5ec3a7fe05', // Foggy Forest
       '1441974231531-c6227db76b6e', // Sunlight Woods
       '1426604966848-d7adac402bff', // Water/Nature
-      //'1497436072909-60f360e1d4b0',  Galaxy/Starry (corrupted image)
-      //'1502082553048-f009c371b9b5', // Leaves (corrupted image)
-      //'1518173946633-4da9312a7426', // Mountain Peak (corrupted image)
     ],
     'success': [
       '1522202176988-66273c2fd55f', // Planning/Desk
