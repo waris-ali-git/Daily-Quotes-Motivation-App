@@ -6,7 +6,6 @@ import 'package:speech_to_text/speech_to_text.dart';
 class VoiceService {
   final FlutterTts tts = FlutterTts();
   final SpeechToText speech = SpeechToText();
-  bool _isSpeechInitialized = false;
 
   VoiceService() {
       _initTts();

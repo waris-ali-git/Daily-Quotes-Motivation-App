@@ -1,5 +1,3 @@
-// Quote ka structure define karta hai
-
 class Quote {
   final String id;
   final String text;
@@ -8,29 +6,26 @@ class Quote {
   bool isFavorite;
 
   Quote({
-    required this.id,
     required this.text,
     required this.author,
-    required this.category,
+    String? id,
+    this.category = 'General',
     this.isFavorite = false,
-  });
+  }) : id = id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
-  // JSON se Quote object banana
+  // Factory constructor to create a Quote from JSON (API response)
   factory Quote.fromJson(Map<String, dynamic> json) {
+    // ZenQuotes API uses 'q' for quote and 'a' for author
     return Quote(
-      // ZenQuotes uses 'q' for text and 'a' for author. 
-      // Fallback to 'id' or generate one from text hash if not present.
-      id: json['id'] ?? json['q'].hashCode.toString(),
+      id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
       text: json['q'] ?? json['text'] ?? 'Unknown Quote',
-      author: json['a'] ?? json['author'] ?? 'Unknown Author',
-      // ZenQuotes often sends 'c' or nothing for category in random. 
-      // We can default to 'General' or use 'c'.
-      category: json['c'] ?? json['category'] ?? 'General',
+      author: json['a'] ?? json['author'] ?? 'Unknown',
+      category: json['category'] ?? 'General',
       isFavorite: json['isFavorite'] ?? false,
     );
   }
 
-  // Quote ko JSON mein convert karna (save ke liye)
+  // Convert Quote to JSON (for saving to Shared Preferences/Database)
   Map<String, dynamic> toJson() {
     return {
       'id': id,

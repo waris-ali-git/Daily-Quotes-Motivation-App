@@ -12,7 +12,7 @@ import '../services/api_service.dart';
 class QuoteImageGenerator extends StatefulWidget {
   final Quote quote;
 
-  const QuoteImageGenerator({Key? key, required this.quote}) : super(key: key);
+  const QuoteImageGenerator({super.key, required this.quote});
 
   @override
   State<QuoteImageGenerator> createState() => _QuoteImageGeneratorState();
@@ -23,7 +23,6 @@ class _QuoteImageGeneratorState extends State<QuoteImageGenerator> {
   final ApiService _apiService = ApiService();
   
   String? _imageUrl;
-  bool _isLoading = true;
 
   @override
   void initState() {
@@ -32,7 +31,6 @@ class _QuoteImageGeneratorState extends State<QuoteImageGenerator> {
   }
 
   Future<void> _fetchNewImage() async {
-    setState(() => _isLoading = true);
     // Use category or a default "nature" keyword if category is generic
     String query = widget.quote.category.isEmpty || widget.quote.category == 'General' 
         ? 'nature,inspirational' 
@@ -47,7 +45,6 @@ class _QuoteImageGeneratorState extends State<QuoteImageGenerator> {
     if (mounted) {
       setState(() {
         _imageUrl = url;
-        _isLoading = false;
       });
     }
   }
@@ -59,7 +56,12 @@ class _QuoteImageGeneratorState extends State<QuoteImageGenerator> {
       final imagePath = await File('${directory.path}/quote_share.png').create();
       await imagePath.writeAsBytes(imageBytes);
 
-      await Share.shareXFiles([XFile(imagePath.path)], text: 'Check out this quote!');
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(imagePath.path)],
+          text: 'Check out this quote!',
+        ),
+      );
     }
   }
 
@@ -106,8 +108,8 @@ class _QuoteImageGeneratorState extends State<QuoteImageGenerator> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withOpacity(0.2), // Lighter at top
-                              Colors.black.withOpacity(0.7), // Darker at bottom
+                              Colors.black.withValues(alpha: 0.2), // Lighter at top
+                              Colors.black.withValues(alpha: 0.7), // Darker at bottom
                             ],
                           ),
                         ),
@@ -134,14 +136,14 @@ class _QuoteImageGeneratorState extends State<QuoteImageGenerator> {
                                 shadows: [
                                   Shadow(
                                     blurRadius: 10.0,
-                                    color: Colors.black.withOpacity(0.5),
+                                    color: Colors.black.withValues(alpha: 0.5),
                                     offset: const Offset(2.0, 2.0),
                                   ),
                                 ],
                               ),
                             ),
                             const SizedBox(height: 30),
-                            Divider(color: Colors.white.withOpacity(0.5), endIndent: 80, indent: 80),
+                            Divider(color: Colors.white.withValues(alpha: 0.5), endIndent: 80, indent: 80),
                             const SizedBox(height: 10),
                             Text(
                               widget.quote.author.toUpperCase(),
@@ -150,7 +152,7 @@ class _QuoteImageGeneratorState extends State<QuoteImageGenerator> {
                                 fontSize: 14,
                                 letterSpacing: 2.0,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                               ),
                             ),
                           ],

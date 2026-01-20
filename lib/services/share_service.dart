@@ -7,6 +7,7 @@ class ShareService {
     if (author != null && author.isNotEmpty) {
       shareText += '\n- $author';
     }
+    // ignore: deprecated_member_use
     await Share.share(shareText);
   }
 }

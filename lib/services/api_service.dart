@@ -1,5 +1,6 @@
 // Internet se quotes laane ka kaam
 
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/quote_model.dart';
@@ -41,7 +42,7 @@ class ApiService {
        }
        return [];
     } catch (e) {
-      print('Error fetching category quotes: $e');
+      debugPrint('Error fetching category quotes: $e');
       return [];
     }
   }
