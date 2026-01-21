@@ -5,6 +5,8 @@ import 'screens/home_screen.dart';
 import 'providers/quote_provider.dart';
 import 'services/notification_service.dart';
 
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await MobileAds.instance.initialize();
