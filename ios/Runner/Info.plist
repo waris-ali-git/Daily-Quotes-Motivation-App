@@ -21,7 +21,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>GADApplicationIdentifier</key>
-    <string>ca-app-pub-7545409441931079/2273085677</string> <!-- Found in AdMob dashboard -->
+    <string>ca-app-pub-7545409441931079~1165401022</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>

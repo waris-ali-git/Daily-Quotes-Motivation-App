@@ -7,6 +7,7 @@ import '../providers/quote_provider.dart';
 import '../services/share_service.dart';
 import '../services/voice_service.dart';
 import '../services/notification_service.dart';
+import '../services/ad_service.dart';
 import '../widgets/quote_image_generator.dart';
 import 'favorites_screen.dart';
 
@@ -21,15 +22,18 @@ class _HomeScreenState extends State<HomeScreen> {
   late BannerAd _bannerAd;
   bool _isAdLoaded = false;
   final VoiceService _voiceService = VoiceService();
+  final AdService _adService = AdService();
 
   @override
   void initState() {
     super.initState();
     _initBannerAd();
+    // Load interstitial ad immediately after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (Provider.of<QuoteProvider>(context, listen: false).currentQuote == null) {
-            Provider.of<QuoteProvider>(context, listen: false).fetchNewQuote();
-        }
+      _adService.loadInterstitialAd();
+      if (Provider.of<QuoteProvider>(context, listen: false).currentQuote == null) {
+        Provider.of<QuoteProvider>(context, listen: false).fetchNewQuote();
+      }
     });
   }
 
@@ -57,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _voiceService.stop();
     _bannerAd.dispose();
+    _adService.dispose();
     super.dispose();
   }
 
@@ -201,6 +206,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: provider.isLoading
                       ? null
                       : () {
+                          // Show ad first
+                          _adService.showInterstitialAd();
+                          // Show feedback to user
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Loading interstitial ad...'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          }
+                          // Fetch quote
                           provider.fetchNewQuote();
                         },
                   icon: const Icon(Icons.refresh),
