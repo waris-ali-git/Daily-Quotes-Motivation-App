@@ -23,6 +23,32 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isAdLoaded = false;
   final VoiceService _voiceService = VoiceService();
   final AdService _adService = AdService();
+  int _quoteCounter = 0; // Track number of quotes fetched (starts at 0)
+  static const int _quotesPerAd = 5; // Show ad after every 5 quotes
+  
+  void _handleNewQuote() {
+    // Increment quote counter
+    _quoteCounter++;
+    debugPrint('═══════════════════════════════════════════════════');
+    debugPrint('NEW QUOTE BUTTON CLICKED');
+    debugPrint('Quote Counter: $_quoteCounter');
+    debugPrint('Show ad at: 5, 10, 15, 20...');
+    debugPrint('Current: $_quoteCounter, Modulo: ${_quoteCounter % _quotesPerAd}');
+    debugPrint('═══════════════════════════════════════════════════');
+    
+    // Fetch quote
+    Provider.of<QuoteProvider>(context, listen: false).fetchNewQuote();
+    
+    // Show ad after every 5 quotes (5th, 10th, 15th, etc.)
+    if (_quoteCounter % _quotesPerAd == 0) {
+      debugPrint('═══════════════════════════════════════════════════');
+      debugPrint('🎯 TIME TO SHOW AD! Counter = $_quoteCounter');
+      debugPrint('═══════════════════════════════════════════════════');
+      _adService.showInterstitialAd();
+    } else {
+      debugPrint('No ad this time. Next ad at: ${((_quoteCounter ~/ _quotesPerAd) + 1) * _quotesPerAd}');
+    }
+  }
 
   @override
   void initState() {
@@ -89,6 +115,11 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.favorite),
             onPressed: () {
+              // Show ad when navigating to favorites
+              debugPrint('═══════════════════════════════════════════════════');
+              debugPrint('FAVORITES CLICKED - Showing ad');
+              debugPrint('═══════════════════════════════════════════════════');
+              _adService.showInterstitialAd();
               Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen()));
             },
           ),
@@ -171,6 +202,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                     children: [
                                       OutlinedButton.icon(
                                         onPressed: () {
+                                          // Show ad when navigating to image mode
+                                          debugPrint('═══════════════════════════════════════════════════');
+                                          debugPrint('IMAGE MODE CLICKED - Showing ad');
+                                          debugPrint('═══════════════════════════════════════════════════');
+                                          _adService.showInterstitialAd();
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
@@ -206,19 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: provider.isLoading
                       ? null
                       : () {
-                          // Show ad first
-                          _adService.showInterstitialAd();
-                          // Show feedback to user
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Loading interstitial ad...'),
-                                duration: Duration(seconds: 1),
-                              ),
-                            );
-                          }
-                          // Fetch quote
-                          provider.fetchNewQuote();
+                          _handleNewQuote();
                         },
                   icon: const Icon(Icons.refresh),
                   label: const Text('New Quote'),
