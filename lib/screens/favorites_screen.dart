@@ -13,10 +13,14 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
+  // Define Royal Colors
+  final Color _royalBlue = const Color(0xFF0F172A);
+  final Color _gold = const Color(0xFFDAC64F);
+  final Color _darkBackground = const Color(0xFFFFFFFF); // Very dark blue/black for contrast
+
   @override
   void initState() {
     super.initState();
-    // Refresh favorites when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<QuoteProvider>(context, listen: false).loadFavorites();
     });
@@ -25,9 +29,20 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _darkBackground, // Dark background to make cards pop
       appBar: AppBar(
-        title: Text('Favorites', style: GoogleFonts.lato()),
+        backgroundColor: _darkBackground,
+        iconTheme: IconThemeData(color: _gold),
+        title: Text(
+          'Your Collection',
+          style: GoogleFonts.playfairDisplay(
+            color: _gold,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
         centerTitle: true,
+        elevation: 0,
       ),
       body: Consumer<QuoteProvider>(
         builder: (context, provider, child) {
@@ -36,10 +51,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                   const Icon(Icons.favorite_border, size: 64, color: Colors.grey),
-                   const SizedBox(height: 16),
-                   Text(
-                    "No favorites yet!",
+                  Icon(Icons.favorite_border, size: 64, color: _royalBlue.withOpacity(0.5)),
+                  const SizedBox(height: 16),
+                  Text(
+                    "No gems collected yet.",
                     style: GoogleFonts.lato(fontSize: 18, color: Colors.grey),
                   ),
                 ],
@@ -47,48 +62,71 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             );
           }
 
-          return ListView.separated(
+          return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: provider.favorites.length,
-            separatorBuilder: (ctx, i) => const Divider(),
             itemBuilder: (context, index) {
               final Quote quote = provider.favorites[index];
-              return Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: _royalBlue, // Royal Blue Card
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _gold.withOpacity(0.3), width: 1), // Subtle gold border
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Decorative quote icon
+                      Icon(Icons.format_quote, color: _gold.withOpacity(0.5), size: 30),
+
+                      const SizedBox(height: 8),
+
                       Text(
-                        '"${quote.text}"',
-                        style: GoogleFonts.merriweather(
-                          fontSize: 16,
+                        quote.text,
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 20,
+                          color: _gold, // Golden Text
                           fontStyle: FontStyle.italic,
+                          height: 1.4,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            "- ${quote.author}",
-                            style: GoogleFonts.lato(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[700],
+                          Expanded(
+                            child: Text(
+                              "- ${quote.author}",
+                              style: GoogleFonts.montserrat(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withOpacity(0.9), // White author for readability
+                                fontSize: 14,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           Row(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.share, size: 20, color: Colors.blue),
+                                icon: const Icon(Icons.share, size: 22),
+                                color: Colors.white70,
                                 onPressed: () {
-                                   ShareService().shareQuote(quote.text, author: quote.author);
+                                  ShareService().shareQuote(quote.text, author: quote.author);
                                 },
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                                icon: const Icon(Icons.delete_outline, size: 22),
+                                color: Colors.redAccent,
                                 onPressed: () {
                                   provider.toggleFavorite(quote);
                                 },
