@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/quote_provider.dart';
 import '../models/quote_model.dart';
 import '../services/share_service.dart';
+import '../widgets/quote_image_generator.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -118,8 +119,22 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                           Row(
                             children: [
                               IconButton(
+                                icon: const Icon(Icons.image, size: 22),
+                                color: Colors.white70,
+                                tooltip: 'Image Mode',
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => QuoteImageGenerator(quote: quote),
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
                                 icon: const Icon(Icons.share, size: 22),
                                 color: Colors.white70,
+                                tooltip: 'Share',
                                 onPressed: () {
                                   ShareService().shareQuote(quote.text, author: quote.author);
                                 },
@@ -127,6 +142,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                               IconButton(
                                 icon: const Icon(Icons.delete_outline, size: 22),
                                 color: Colors.redAccent,
+                                tooltip: 'Remove from Favorites',
                                 onPressed: () {
                                   provider.toggleFavorite(quote);
                                 },

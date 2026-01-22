@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../providers/quote_provider.dart';
+import '../providers/font_size_provider.dart';
 // import '../models/quote_model.dart'; // Unused
 import '../services/share_service.dart';
 import '../services/voice_service.dart';
@@ -10,10 +11,11 @@ import '../services/notification_service.dart';
 import '../services/ad_service.dart';
 import '../widgets/quote_image_generator.dart';
 import 'favorites_screen.dart';
+import 'settings_screen.dart'; // <--- ADDED IMPORT
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-  
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -25,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final AdService _adService = AdService();
   int _quoteCounter = 0; // Track number of quotes fetched (starts at 0)
   static const int _quotesPerAd = 5; // Show ad after every 5 quotes
-  
+
   void _handleNewQuote() {
     // Increment quote counter
     _quoteCounter++;
@@ -35,10 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
     debugPrint('Show ad at: 5, 10, 15, 20...');
     debugPrint('Current: $_quoteCounter, Modulo: ${_quoteCounter % _quotesPerAd}');
     debugPrint('═══════════════════════════════════════════════════');
-    
+
     // Fetch quote
     Provider.of<QuoteProvider>(context, listen: false).fetchNewQuote();
-    
+
     // Show ad after every 5 quotes (5th, 10th, 15th, etc.)
     if (_quoteCounter % _quotesPerAd == 0) {
       debugPrint('═══════════════════════════════════════════════════');
@@ -65,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _initBannerAd() {
     _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111', 
+      adUnitId: 'ca-app-pub-3940256099942544/6300978111',
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
@@ -124,14 +126,26 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           IconButton(
-             icon: const Icon(Icons.alarm),
-             tooltip: 'Schedule Daily Quote',
-             onPressed: () => _pickTime(context),
-          )
+            icon: const Icon(Icons.alarm),
+            tooltip: 'Schedule Daily Quote',
+            onPressed: () => _pickTime(context),
+          ),
+          // --- SETTINGS BUTTON ADDED HERE ---
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+            },
+          ),
         ],
       ),
-      body: Consumer<QuoteProvider>(
-        builder: (context, provider, child) {
+      body: Consumer2<QuoteProvider, FontSizeProvider>(
+        builder: (context, provider, fontSizeProvider, child) {
+          // Calculate font sizes based on provider
+          final quoteFontSize = 26.0 * fontSizeProvider.getMultiplier();
+          final authorFontSize = 18.0 * fontSizeProvider.getMultiplier();
+          
           return Column(
             children: [
               Expanded(
@@ -139,101 +153,101 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: provider.isLoading
                       ? const CircularProgressIndicator()
                       : provider.currentQuote != null
-                          ? Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '"${provider.currentQuote!.text}"',
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.merriweather(
-                                      fontSize: 26,
-                                      fontStyle: FontStyle.italic,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Text(
-                                    "- ${provider.currentQuote!.author}",
-                                    style: GoogleFonts.lato(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.grey[700],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 48),
-                                  // Action Buttons Row
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(
-                                          provider.favorites.any((q) => q.text == provider.currentQuote!.text)
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          color: Colors.red,
-                                          size: 32,
-                                        ),
-                                        onPressed: () {
-                                          provider.toggleFavorite(provider.currentQuote!);
-                                        },
-                                      ),
-                                      const SizedBox(width: 20),
-                                      IconButton(
-                                        icon: const Icon(Icons.share, size: 32, color: Colors.blue),
-                                        onPressed: () {
-                                          ShareService().shareQuote(provider.currentQuote!.text, author: provider.currentQuote!.author);
-                                        },
-                                      ),
-                                      const SizedBox(width: 20),
-                                      IconButton(
-                                        icon: const Icon(Icons.volume_up, size: 32, color: Colors.green),
-                                        onPressed: () {
-                                          _voiceService.speakQuote("${provider.currentQuote!.text} by ${provider.currentQuote!.author}");
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 30),
-                                  // Feature Buttons Row
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      OutlinedButton.icon(
-                                        onPressed: () {
-                                          // Show ad when navigating to image mode
-                                          debugPrint('═══════════════════════════════════════════════════');
-                                          debugPrint('IMAGE MODE CLICKED - Showing ad');
-                                          debugPrint('═══════════════════════════════════════════════════');
-                                          _adService.showInterstitialAd();
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => QuoteImageGenerator(quote: provider.currentQuote!),
-                                            ),
-                                          );
-                                        },
-                                        icon: const Icon(Icons.image),
-                                        label: const Text("Image Mode"),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      OutlinedButton.icon(
-                                        onPressed: () {
-                                           NotificationService().showInstantNotification(
-                                             "Daily Motivation",
-                                             provider.currentQuote!.text
-                                           );
-                                        },
-                                        icon: const Icon(Icons.notifications_active),
-                                        label: const Text("Test Notify"),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                      ? Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '"${provider.currentQuote!.text}"',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.merriweather(
+                            fontSize: quoteFontSize,
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          "- ${provider.currentQuote!.author}",
+                          style: GoogleFonts.lato(
+                            fontSize: authorFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const SizedBox(height: 48),
+                        // Action Buttons Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                provider.favorites.any((q) => q.text == provider.currentQuote!.text)
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: Colors.red,
+                                size: 32,
                               ),
-                            )
-                          : const Text("Press the button to get a quote!"),
+                              onPressed: () {
+                                provider.toggleFavorite(provider.currentQuote!);
+                              },
+                            ),
+                            const SizedBox(width: 20),
+                            IconButton(
+                              icon: const Icon(Icons.share, size: 32, color: Colors.blue),
+                              onPressed: () {
+                                ShareService().shareQuote(provider.currentQuote!.text, author: provider.currentQuote!.author);
+                              },
+                            ),
+                            const SizedBox(width: 20),
+                            IconButton(
+                              icon: const Icon(Icons.volume_up, size: 32, color: Colors.green),
+                              onPressed: () {
+                                _voiceService.speakQuote("${provider.currentQuote!.text} by ${provider.currentQuote!.author}");
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 30),
+                        // Feature Buttons Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                // Show ad when navigating to image mode
+                                debugPrint('═══════════════════════════════════════════════════');
+                                debugPrint('IMAGE MODE CLICKED - Showing ad');
+                                debugPrint('═══════════════════════════════════════════════════');
+                                _adService.showInterstitialAd();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => QuoteImageGenerator(quote: provider.currentQuote!),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.image),
+                              label: const Text("Image Mode"),
+                            ),
+                            const SizedBox(width: 16),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                NotificationService().showInstantNotification(
+                                    "Daily Motivation",
+                                    provider.currentQuote!.text
+                                );
+                              },
+                              icon: const Icon(Icons.notifications_active),
+                              label: const Text("Test Notify"),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
+                      : const Text("Press the button to get a quote!"),
                 ),
               ),
               Padding(
@@ -242,8 +256,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: provider.isLoading
                       ? null
                       : () {
-                          _handleNewQuote();
-                        },
+                    _handleNewQuote();
+                  },
                   icon: const Icon(Icons.refresh),
                   label: const Text('New Quote'),
                   style: ElevatedButton.styleFrom(
