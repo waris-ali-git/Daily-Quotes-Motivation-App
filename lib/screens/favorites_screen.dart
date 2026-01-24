@@ -17,7 +17,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   // Define Royal Colors
   final Color _royalBlue = const Color(0xFF0F172A);
   final Color _gold = const Color(0xFFDAC64F);
-  final Color _darkBackground = const Color(0xFFFFFFFF); // Very dark blue/black for contrast
+  final Color _darkBackground = const Color(0xFF000517); // Very dark blue/black for contrast
 
   @override
   void initState() {
@@ -126,7 +126,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => QuoteImageGenerator(quote: quote),
+                                      builder: (_) => QuoteImageGenerator(quote: quote, onClose: () {  },),
                                     ),
                                   );
                                 },

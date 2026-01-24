@@ -358,3 +358,15 @@ quotes_app/
 │
 ├── pubspec.yaml                          # Dependencies yahan add hoti
 └── README.md                             # Project info
+
+---
+
+# Things to improve after creating this app
+
+### 1. Font Styling
+### 2. New and elegant images
+### 3. images & quotes logic
+- k offline mode, ya time, ya quote k hisab se kaisi images/quotes show hon, & ek image anay k bad woh kitne images k bad ayegi(stack ya queue wghaira)
+
+## (continue...)
+---

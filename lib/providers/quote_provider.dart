@@ -54,6 +54,64 @@ class QuoteProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  int _currentStreak = 0;
+  int _longestStreak = 0;
+
+  int get currentStreak => _currentStreak;
+  int get longestStreak => _longestStreak;
+
+  // Check and Update Streak Logic
+  Future<void> checkStreak() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Key names
+    const String lastVisitKey = 'last_visit_date';
+    const String streakKey = 'current_streak';
+    const String longestKey = 'longest_streak';
+
+    // Load stored values
+    String? lastVisitString = prefs.getString(lastVisitKey);
+    _currentStreak = prefs.getInt(streakKey) ?? 0;
+    _longestStreak = prefs.getInt(longestKey) ?? 0;
+
+    DateTime now = DateTime.now();
+    DateTime today = DateTime(now.year, now.month, now.day); // Strip time
+    
+    if (lastVisitString == null) {
+      // First visit ever
+      _currentStreak = 1;
+      _updateStreakData(prefs, today, _currentStreak);
+    } else {
+      DateTime lastVisit = DateTime.parse(lastVisitString);
+      
+      if (today.isAtSameMomentAs(lastVisit)) {
+        // Already visited today, do nothing to streak
+      } else if (today.difference(lastVisit).inDays == 1) {
+        // Consecutive day
+        _currentStreak++;
+      } else {
+        // Missed a day (or more)
+        _currentStreak = 1; // Reset to 1 (today counts)
+      }
+      
+      // Update data
+      _updateStreakData(prefs, today, _currentStreak);
+    }
+    
+    notifyListeners();
+  }
+
+  Future<void> _updateStreakData(SharedPreferences prefs, DateTime today, int streak) async {
+    // Update longest streak if needed
+    if (streak > _longestStreak) {
+      _longestStreak = streak;
+      await prefs.setInt('longest_streak', _longestStreak);
+    }
+
+    await prefs.setString('last_visit_date', today.toIso8601String());
+    await prefs.setInt('current_streak', streak);
+  }
+
   // Load Favorites from SharedPreferences (Call this when app starts)
   Future<void> loadFavorites() async {
     final prefs = await SharedPreferences.getInstance();
@@ -64,6 +122,10 @@ class QuoteProvider with ChangeNotifier {
       _favorites = decoded.map((item) => Quote.fromJson(item)).toList();
       notifyListeners();
     }
+    
+    // Load streak initial values for UI before checkStreak potentially updates them
+    _currentStreak = prefs.getInt('current_streak') ?? 0;
+    _longestStreak = prefs.getInt('longest_streak') ?? 0;
   }
 
   // Save Favorites to SharedPreferences

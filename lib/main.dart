@@ -26,7 +26,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   final ThemeProvider themeProvider;
   final FontSizeProvider fontSizeProvider;
-  
+
   const MyApp({
     super.key,
     required this.themeProvider,
@@ -60,6 +60,7 @@ class MyApp extends StatelessWidget {
             ),
             themeMode: themeProvider.themeMode,
             home: const HomeScreen(),
+            debugShowCheckedModeBanner: false,
           );
         },
       ),
