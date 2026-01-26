@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 class StreakWidget extends StatefulWidget {
   final int currentStreak;      // Current streak count
@@ -88,17 +89,11 @@ class _StreakWidgetState extends State<StreakWidget> with SingleTickerProviderSt
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: widget.currentStreak >= 7
-              ? [Color(0xFFf093fb), Color(0xFFf5576c)]  // Hot pink for 7+
-              : [Color(0xFF667eea), Color(0xFF764ba2)], // Purple
+              ? AppConstants.pureGoldGradient  // Gold for 7+
+              : AppConstants.skyFlowGradient, // Blue
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        boxShadow: AppConstants.cardShadow,
       ),
 
       child: Column(
@@ -114,7 +109,7 @@ class _StreakWidgetState extends State<StreakWidget> with SingleTickerProviderSt
                      scale: widget.showAnimation ? _scaleAnimation.value : 1.0,
                      child: Icon(
                       Icons.local_fire_department,
-                      color: Colors.orange,
+                      color: AppConstants.richGold,
                       size: 40,
                     ),
                   );

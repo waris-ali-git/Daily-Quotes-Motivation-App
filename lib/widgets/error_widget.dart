@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 class ErrorWidget extends StatelessWidget {
   final String errorMessage;
@@ -23,13 +24,13 @@ class ErrorWidget extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: AppConstants.errorColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 60,
-                color: Colors.red[300],
+                color: AppConstants.errorColor,
               ),
             ),
 
@@ -38,10 +39,7 @@ class ErrorWidget extends StatelessWidget {
             // Error message
             Text(
               errorMessage,
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[400],
-              ),
+              style: AppConstants.bodyMedium.copyWith(color: AppConstants.textSecondary),
               textAlign: TextAlign.center,
             ),
 
@@ -50,13 +48,13 @@ class ErrorWidget extends StatelessWidget {
               SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: onRetry,
-                icon: Icon(Icons.refresh),
-                label: Text('Try Again'),
+                icon: Icon(Icons.refresh, color: AppConstants.deepBlue),
+                label: Text('Try Again', style: AppConstants.buttonTextPrimary),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF667eea),
+                  backgroundColor: AppConstants.secondaryColor, // Gold button
                   padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
                   ),
                 ),
               ),

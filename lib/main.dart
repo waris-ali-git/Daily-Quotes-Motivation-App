@@ -6,6 +6,7 @@ import 'providers/quote_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/font_size_provider.dart';
 import 'services/notification_service.dart';
+import 'utils/constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,17 +47,29 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             title: 'Daily Quotes',
             theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: AppConstants.primaryColor,
+                primary: AppConstants.primaryColor,
+                secondary: AppConstants.secondaryColor,
+                surface: AppConstants.surfaceColor,
+                background: AppConstants.backgroundColor,
+              ),
               useMaterial3: true,
               brightness: Brightness.light,
+              scaffoldBackgroundColor: AppConstants.softWhite,
             ),
             darkTheme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.deepPurple,
+                seedColor: AppConstants.primaryColor,
+                primary: AppConstants.primaryColor,
+                secondary: AppConstants.secondaryColor,
+                surface: AppConstants.surfaceColor,
+                background: AppConstants.backgroundColor,
                 brightness: Brightness.dark,
               ),
               useMaterial3: true,
               brightness: Brightness.dark,
+              scaffoldBackgroundColor: AppConstants.backgroundColor,
             ),
             themeMode: themeProvider.themeMode,
             home: const HomeScreen(),

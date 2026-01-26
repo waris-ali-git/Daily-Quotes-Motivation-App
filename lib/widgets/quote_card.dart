@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import '../models/quote_model.dart';
+import '../utils/constants.dart';
 
 class QuoteCard extends StatefulWidget {
   final Quote quote;
   final VoidCallback? onFavorite;    // Heart button dabane pe
   final VoidCallback? onShare;       // Share button pe
   final VoidCallback? onSpeak;       // Speaker button pe
+  final List<Color>? gradientColors; // Custom gradient colors (optional)
 
   QuoteCard({
     required this.quote,
     this.onFavorite,
     this.onShare,
     this.onSpeak,
+    this.gradientColors,
   });
 
   @override
@@ -30,19 +33,10 @@ class _QuoteCardState extends State<QuoteCard> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF667eea),  // Purple-blue
-            Color(0xFF764ba2),  // Deep purple
-          ],
+          colors: widget.gradientColors ?? AppConstants.deepOceanGradient,
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: Offset(0, 5),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppConstants.radiusXLarge),
+        boxShadow: AppConstants.elevatedShadow,
       ),
 
       child: Column(
@@ -51,13 +45,7 @@ class _QuoteCardState extends State<QuoteCard> {
           // Quote Text
           Text(
             '"${widget.quote.text}"',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w400,
-              color: Colors.white,
-              fontStyle: FontStyle.italic,
-              height: 1.5,  // Line spacing
-            ),
+            style: AppConstants.quoteTextStyle,
             textAlign: TextAlign.center,
           ),
 
@@ -66,11 +54,7 @@ class _QuoteCardState extends State<QuoteCard> {
           // Author Name
           Text(
             '- ${widget.quote.author}',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white70,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppConstants.authorTextStyle,
           ),
 
           SizedBox(height: 24),
@@ -86,22 +70,22 @@ class _QuoteCardState extends State<QuoteCard> {
                     : Icons.favorite_border,
                 onTap: widget.onFavorite,
                 color: widget.quote.isFavorite
-                    ? Colors.red
-                    : Colors.white,
+                    ? AppConstants.errorColor
+                    : AppConstants.white,
               ),
 
               // Share Button
               _buildActionButton(
                 icon: Icons.share,
                 onTap: widget.onShare,
-                color: Colors.white,
+                color: AppConstants.white,
               ),
 
               // Speaker Button
               _buildActionButton(
                 icon: Icons.volume_up,
                 onTap: widget.onSpeak,
-                color: Colors.white,
+                color: AppConstants.white,
               ),
             ],
           ),

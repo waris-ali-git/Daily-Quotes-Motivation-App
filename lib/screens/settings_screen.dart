@@ -6,6 +6,7 @@ import '../services/notification_service.dart';
 import '../services/voice_service.dart';
 import '../providers/theme_provider.dart';
 import '../providers/font_size_provider.dart';
+import '../utils/constants.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,10 +16,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Theme Colors
-  final Color _royalBlue = const Color(0xFF0F172A);
-  final Color _gold = const Color(0xFFA39551);
-  final Color _darkBackground = const Color(0xFFFFFFFF);
+  // Theme Colors removed in favor of AppConstants
 
   bool _notificationsEnabled = true;
   bool _soundEnabled = false;
@@ -124,7 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               : Colors.black,
         ),
       ),
-      trailing: isSelected ? Icon(Icons.check, color: _gold) : null,
+      trailing: isSelected ? Icon(Icons.check, color: AppConstants.secondaryColor) : null,
       onTap: () {
         final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
         themeProvider.toggleTheme(isDark);
@@ -206,7 +204,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-      trailing: isSelected ? Icon(Icons.check, color: _gold) : null,
+      trailing: isSelected ? Icon(Icons.check, color: AppConstants.secondaryColor) : null,
       onTap: () {
         final fontSizeProvider = Provider.of<FontSizeProvider>(context, listen: false);
         fontSizeProvider.setFontSize(size);
@@ -265,7 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
             child: Text(
               'Rate Now',
-              style: GoogleFonts.lato(color: _gold, fontWeight: FontWeight.bold),
+              style: GoogleFonts.lato(color: AppConstants.secondaryColor, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -340,12 +338,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: _gold),
+          icon: Icon(Icons.arrow_back_ios, color: AppConstants.secondaryColor),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Settings',
-          style: GoogleFonts.playfairDisplay(color: _gold, fontWeight: FontWeight.bold),
+          style: GoogleFonts.playfairDisplay(color: AppConstants.secondaryColor, fontWeight: FontWeight.bold),
         ),
       ),
       body: ListView(
@@ -360,10 +358,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: "Daily Notifications",
             trailing: Switch(
               value: _notificationsEnabled,
-              activeColor: _royalBlue,
-              activeTrackColor: _gold,
-              inactiveThumbColor: Colors.grey,
-              inactiveTrackColor: Colors.grey.shade800,
+              activeColor: AppConstants.secondaryColor, // Gold for active thumb
+              activeTrackColor: AppConstants.secondaryColor.withOpacity(0.5),
+              inactiveThumbColor: AppConstants.textTertiary,
+              inactiveTrackColor: AppConstants.cardColor,
               onChanged: _saveNotificationSetting,
             ),
           ),
@@ -372,8 +370,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: "App Sounds",
             trailing: Switch(
               value: _soundEnabled,
-              activeColor: _royalBlue,
-              activeTrackColor: _gold,
+              activeColor: AppConstants.secondaryColor,
+              activeTrackColor: AppConstants.secondaryColor.withOpacity(0.5),
               inactiveThumbColor: Colors.grey,
               inactiveTrackColor: Colors.grey.shade800,
               onChanged: _saveSoundSetting,
@@ -392,10 +390,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   themeProvider.isDarkMode ? "Dark Mode" : "Light Mode",
-                  style: GoogleFonts.lato(color: _gold),
+                  style: GoogleFonts.lato(color: AppConstants.secondaryColor),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.arrow_forward_ios, size: 16, color: _gold),
+                Icon(Icons.arrow_forward_ios, size: 16, color: AppConstants.secondaryColor),
               ],
             ),
             onTap: _showThemeDialog,
@@ -408,10 +406,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   fontSizeProvider.fontSizeLabel,
-                  style: GoogleFonts.lato(color: _gold),
+                  style: GoogleFonts.lato(color: AppConstants.secondaryColor),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.arrow_forward_ios, size: 16, color: _gold),
+                Icon(Icons.arrow_forward_ios, size: 16, color: AppConstants.secondaryColor),
               ],
             ),
             onTap: _showFontSizeDialog,
@@ -424,13 +422,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSettingsTile(
             icon: Icons.star_outline,
             title: "Rate Us",
-            trailing: Icon(Icons.arrow_forward_ios, size: 16, color: _gold),
+            trailing: Icon(Icons.arrow_forward_ios, size: 16, color: AppConstants.secondaryColor),
             onTap: _rateUs,
           ),
           _buildSettingsTile(
             icon: Icons.privacy_tip_outlined,
             title: "Privacy Policy",
-            trailing: Icon(Icons.arrow_forward_ios, size: 16, color: _gold),
+            trailing: Icon(Icons.arrow_forward_ios, size: 16, color: AppConstants.secondaryColor),
             onTap: _showPrivacyPolicy,
           ),
 
@@ -452,7 +450,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Text(
         title,
         style: GoogleFonts.montserrat(
-          color: _gold,
+          color: AppConstants.secondaryColor,
           fontSize: 12,
           fontWeight: FontWeight.bold,
           letterSpacing: 2.0,
@@ -470,31 +468,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1E293B)
-            : Colors.grey[100],
-        borderRadius: BorderRadius.circular(15),
+        color: AppConstants.cardColor,
+        borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
         border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withOpacity(0.05)
-              : Colors.grey.withOpacity(0.2),
+          color: AppConstants.surfaceColor,
         ),
       ),
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: _royalBlue.withOpacity(0.2),
+            color: AppConstants.primaryColor.withOpacity(0.2),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: _gold, size: 20),
+          child: Icon(icon, color: AppConstants.secondaryColor, size: 20),
         ),
         title: Text(
           title,
           style: GoogleFonts.lato(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white
-                : Colors.black,
+            color: AppConstants.textPrimary,
             fontSize: 16,
           ),
         ),

@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../providers/quote_provider.dart';
 import '../providers/font_size_provider.dart';
-import '../models/quote_model.dart';
 import '../services/share_service.dart';
 import '../services/voice_service.dart';
 import '../services/notification_service.dart';
@@ -19,7 +18,11 @@ import '../widgets/error_widget.dart';
 import 'favorites_screen.dart';
 import 'settings_screen.dart';
 import 'categories_screen.dart';
-import 'community_screen.dart';
+// import 'community_screen.dart'; // Placeholder if needed
+
+import '../utils/constants.dart';
+import '../utils/mood_analyzer.dart';
+import '../utils/time_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final VoiceService _voiceService = VoiceService();
   final AdService _adService = AdService();
   int _quoteCounter = 0;
-  static const int _quotesPerAd = 5;
+  static const int _quotesPerAd = AppConstants.adsFrequency;
 
   bool _showImageGenerator = false;
   int _currentIndex = 0;
@@ -91,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   void _initBannerAd() {
     _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111',
+      adUnitId: AppConstants.admobBannerId,
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
@@ -129,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Daily quote scheduled for ${picked.format(context)}"),
-          backgroundColor: const Color(0xFF6366F1),
+          backgroundColor: AppConstants.primaryColor,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -148,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         currentScreen = const FavoritesScreen();
         break;
       case 2:
-        currentScreen = const Center(child: Text("Challenge Screen Placeholder"));
+        currentScreen = const CategoriesScreen();
         break;
       case 3:
         currentScreen = const Center(child: Text("Community Screen Placeholder"));
@@ -232,8 +235,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             width: 4,
             height: 24,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+              gradient: LinearGradient(
+                colors: AppConstants.pureGoldGradient,
               ),
               borderRadius: BorderRadius.circular(2),
             ),
@@ -255,35 +258,46 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       actions: [
         Consumer<QuoteProvider>(
           builder: (context, provider, child) {
-            return Container(
-              margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                ),
-                borderRadius: BorderRadius.circular(25),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF6366F1).withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            return InkWell(
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                   SnackBar(
+                     content: Text(TimeHelper.getStreakMessage(provider.currentStreak)),
+                     backgroundColor: AppConstants.secondaryColor,
+                     duration: const Duration(seconds: 2),
+                   ),
+                );
+              },
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: AppConstants.pureGoldGradient,
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 18),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${provider.currentStreak}',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppConstants.primaryColor.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${provider.currentStreak}',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -316,22 +330,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         bool isOffline = provider.currentQuote?.author == "Offline Mode";
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
+        // --- MOOD ANALYSIS LOGIC ---
+        List<Color> cardColors = AppConstants.deepOceanGradient;
+        if (provider.currentQuote != null) {
+          final mood = MoodAnalyzer.analyzeMood(provider.currentQuote!.text);
+          final moodInts = MoodAnalyzer.getMoodColors(mood);
+          cardColors = moodInts;
+        }
+
         return Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? [
-                const Color(0xFF0F172A),
-                const Color(0xFF1E293B),
-                const Color(0xFF334155),
-              ]
-                  : [
-                const Color(0xFFFAFAFA),
-                const Color(0xFFF5F3FF),
-                Colors.white,
-              ],
+                  ? AppConstants.midnightDreamGradient
+                  : AppConstants.skyFlowGradient, // Or a lighter variant for light mode
             ),
           ),
           child: SafeArea(
@@ -344,17 +358,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   children: [
                     const SizedBox(height: 80),
 
-                    // Greeting Section
+                    // Greeting Section using TimeHelper
                     Text(
-                      _getGreeting(),
+                      TimeHelper.getGreeting(),
                       style: GoogleFonts.inter(
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -1,
                         height: 1.1,
                         foreground: Paint()
-                          ..shader = const LinearGradient(
-                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                          ..shader = LinearGradient(
+                            colors: AppConstants.pureGoldGradient,
                           ).createShader(const Rect.fromLTWH(0, 0, 200, 70)),
                       ),
                     ),
@@ -371,10 +385,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
                     const SizedBox(height: 32),
 
-                    // Quote Card
+                    // Quote Card with DYNAMIC COLORS
                     if (provider.currentQuote != null)
                       QuoteCard(
                         quote: provider.currentQuote!,
+                        gradientColors: cardColors,
                         onFavorite: () => provider.toggleFavorite(provider.currentQuote!),
                         onShare: () => ShareService().shareQuote(
                           provider.currentQuote!.text,
@@ -386,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       )
                     else if (isOffline)
                       ErrorWidget(
-                        errorMessage: "Unable to connect.\nShowing offline quotes.",
+                        errorMessage: AppConstants.errorNoInternet,
                         onRetry: _handleNewQuote,
                       ),
 
@@ -440,15 +455,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Container(
       height: 60,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+        gradient: LinearGradient(
+          colors: AppConstants.deepOceanGradient,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6366F1).withOpacity(0.4),
+            color: AppConstants.primaryColor.withOpacity(0.4),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -497,7 +512,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         border: Border.all(
           color: isDark
               ? Colors.white.withOpacity(0.1)
-              : const Color(0xFF6366F1).withOpacity(0.2),
+              : AppConstants.primaryColor.withOpacity(0.2),
           width: 1.5,
         ),
         boxShadow: [
@@ -515,7 +530,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           borderRadius: BorderRadius.circular(20),
           child: Icon(
             icon,
-            color: const Color(0xFF6366F1),
+            color: AppConstants.primaryColor,
             size: 24,
           ),
         ),
@@ -548,7 +563,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             icon: Icons.auto_stories_rounded,
             label: 'Quotes Read',
             value: '${_quoteCounter}',
-            color: const Color(0xFF6366F1),
+            color: AppConstants.primaryColor,
             isDark: isDark,
           ),
           Container(
@@ -561,7 +576,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             icon: Icons.favorite_rounded,
             label: 'Favorites',
             value: '${provider.favorites.length}',
-            color: const Color(0xFFEC4899),
+            color: AppConstants.errorColor, // Red/Pinkish
             isDark: isDark,
           ),
         ],
@@ -617,6 +632,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   String _getGreeting() {
+    // Deprecated: using TimeHelper now
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';

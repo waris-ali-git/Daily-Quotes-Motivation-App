@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 class LoadingWidget extends StatelessWidget {
   final String? message;  // Optional loading message
@@ -22,7 +23,7 @@ class LoadingWidget extends StatelessWidget {
             child: CircularProgressIndicator(
               strokeWidth: 3,
               valueColor: AlwaysStoppedAnimation<Color>(
-                Color(0xFF667eea),
+                AppConstants.secondaryColor, // Gold spinner
               ),
             ),
           ),
@@ -34,7 +35,7 @@ class LoadingWidget extends StatelessWidget {
               message!,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[400],
+                color: AppConstants.textSecondary,
               ),
             ),
           ],

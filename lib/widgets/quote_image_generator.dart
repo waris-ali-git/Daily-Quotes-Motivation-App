@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/quote_model.dart';
 import '../services/api_service.dart';
+import '../utils/constants.dart';
 
 class QuoteImageGenerator extends StatefulWidget {
   final Quote quote;
@@ -113,10 +114,7 @@ class _QuoteImageGeneratorState extends State<QuoteImageGenerator> {
                                   gradient: LinearGradient(
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
-                                    colors: [
-                                      Color(0xFF667eea),
-                                      Color(0xFF764ba2),
-                                    ],
+                                    colors: AppConstants.deepOceanGradient,
                                   ),
                                 ),
                                 child: Stack(
@@ -301,7 +299,7 @@ class _QuoteImageGeneratorState extends State<QuoteImageGenerator> {
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF667eea), // Keep primary color for share
+                                backgroundColor: AppConstants.cardColor, // Keep primary color for share
                                 foregroundColor: Colors.white,
                                 elevation: 2,
                                 padding: const EdgeInsets.symmetric(vertical: 14),

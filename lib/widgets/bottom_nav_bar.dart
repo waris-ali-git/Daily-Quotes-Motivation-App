@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;           // Konsa tab selected hai
@@ -13,7 +14,7 @@ class BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Color(0xFF1a1a2e),
+        color: AppConstants.cardColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black38,
@@ -26,9 +27,9 @@ class BottomNavBar extends StatelessWidget {
         currentIndex: currentIndex,
         onTap: onTap,
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Color(0xFF1a1a2e),
-        selectedItemColor: Color(0xFF667eea),
-        unselectedItemColor: Colors.grey[600],
+        backgroundColor: AppConstants.cardColor,
+        selectedItemColor: AppConstants.secondaryColor,
+        unselectedItemColor: AppConstants.textTertiary,
         selectedFontSize: 12,
         unselectedFontSize: 12,
         elevation: 0,
