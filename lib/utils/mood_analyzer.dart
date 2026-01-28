@@ -200,10 +200,8 @@ class MoodAnalyzer {
       moodCount[mood] = (moodCount[mood] ?? 0) + 1;
     }
 
-    // Most common mood
-    var mostCommon = moodCount.entries.reduce(
-            (a, b) => a.value > b.value ? a : b
-    );
+    // Most common mood (kept for potential future UI)
+    final _ = moodCount.entries.reduce((a, b) => a.value > b.value ? a : b);
 
     // Positive vs negative
     int positiveCount = 0;

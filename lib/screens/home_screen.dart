@@ -12,7 +12,6 @@ import '../services/ad_service.dart';
 import '../widgets/quote_image_generator.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/quote_card.dart';
-import '../widgets/streak_widget.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/error_widget.dart';
 import 'favorites_screen.dart';
@@ -226,8 +225,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   PreferredSizeWidget _buildHomeAppBar() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return AppBar(
       title: Row(
         children: [
@@ -427,6 +424,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               _showImageGenerator = true;
                             });
                           },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Quick Navigation (Categories / Challenge / Journal)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildPrimaryButton(
+                            icon: Icons.category_outlined,
+                            label: 'Categories',
+                            onPressed: () => Navigator.pushNamed(context, '/categories'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildPrimaryButton(
+                            icon: Icons.local_fire_department_outlined,
+                            label: 'Challenge',
+                            onPressed: () => Navigator.pushNamed(context, '/challenge'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildPrimaryButton(
+                            icon: Icons.edit_note_outlined,
+                            label: 'Journal',
+                            onPressed: () => Navigator.pushNamed(context, '/journal'),
+                          ),
                         ),
                       ],
                     ),
@@ -631,11 +659,5 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  String _getGreeting() {
-    // Deprecated: using TimeHelper now
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  }
+  // Removed unused _getGreeting() helper.
 }

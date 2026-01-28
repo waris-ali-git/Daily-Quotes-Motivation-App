@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../providers/quote_provider.dart';
 import '../models/quote_model.dart';
 import '../services/share_service.dart';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/api_service.dart';
 import '../utils/constants.dart';
 
 class CategoriesScreen extends StatelessWidget {
@@ -68,9 +69,11 @@ class CategoriesScreen extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
-            // Logic to select category goes here
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Selected category: $title')),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => _CategoryQuotesScreen(category: title),
+              ),
             );
           },
           child: Column(
@@ -99,6 +102,112 @@ class CategoriesScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CategoryQuotesScreen extends StatefulWidget {
+  final String category;
+
+  const _CategoryQuotesScreen({required this.category});
+
+  @override
+  State<_CategoryQuotesScreen> createState() => _CategoryQuotesScreenState();
+}
+
+class _CategoryQuotesScreenState extends State<_CategoryQuotesScreen> {
+  final ApiService _api = ApiService();
+  late Future<List<dynamic>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
+
+  Future<List<dynamic>> _load() async {
+    // Use existing ApiService method (it already fetches a list)
+    final quotes = await _api.getQuotesByCategory(widget.category);
+    return quotes;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppConstants.backgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppConstants.secondaryColor),
+        title: Text(
+          widget.category,
+          style: GoogleFonts.playfairDisplay(color: AppConstants.secondaryColor, fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: FutureBuilder<List<dynamic>>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: AppConstants.secondaryColor));
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                AppConstants.errorApiFailure,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.lato(color: AppConstants.lightGray),
+              ),
+            );
+          }
+          final items = (snapshot.data ?? []).cast();
+          if (items.isEmpty) {
+            return Center(
+              child: Text(
+                'No quotes found for ${widget.category}.',
+                style: GoogleFonts.lato(color: AppConstants.lightGray),
+              ),
+            );
+          }
+          return RefreshIndicator(
+            color: AppConstants.secondaryColor,
+            onRefresh: () async {
+              setState(() => _future = _load());
+              await _future;
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: items.length,
+              itemBuilder: (context, i) {
+                final q = items[i];
+                final text = (q.text ?? '').toString();
+                final author = (q.author ?? '').toString();
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppConstants.cardColor,
+                    borderRadius: BorderRadius.circular(AppConstants.radiusXLarge),
+                    border: Border.all(color: AppConstants.white.withOpacity(0.06)),
+                    boxShadow: AppConstants.cardShadow,
+                  ),
+                  child: ListTile(
+                    title: Text(
+                      text,
+                      style: GoogleFonts.lato(color: AppConstants.white, height: 1.35),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        '- $author',
+                        style: GoogleFonts.lato(color: AppConstants.paleGold.withOpacity(0.9)),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }

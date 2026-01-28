@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'screens/home_screen.dart';
+import 'screens/categories_screen.dart';
+import 'screens/challenge_screen.dart';
+import 'screens/journal_screen.dart';
 import 'providers/quote_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/font_size_provider.dart';
@@ -73,6 +76,12 @@ class MyApp extends StatelessWidget {
             ),
             themeMode: themeProvider.themeMode,
             home: const HomeScreen(),
+            routes: {
+              '/home': (_) => const HomeScreen(),
+              '/categories': (_) => const CategoriesScreen(),
+              '/challenge': (_) => const ChallengeScreen(),
+              '/journal': (_) => const JournalScreen(),
+            },
             debugShowCheckedModeBanner: false,
           );
         },
