@@ -82,16 +82,17 @@ class QuoteProvider with ChangeNotifier {
       _currentStreak = 1;
       _updateStreakData(prefs, today, _currentStreak);
     } else {
-      DateTime lastVisit = DateTime.parse(lastVisitString);
+      DateTime lastVisitRaw = DateTime.parse(lastVisitString);
+      DateTime lastVisitDate = DateTime(lastVisitRaw.year, lastVisitRaw.month, lastVisitRaw.day);
       
-      if (today.isAtSameMomentAs(lastVisit)) {
+      if (today.isAtSameMomentAs(lastVisitDate)) {
         // Already visited today, do nothing to streak
-      } else if (today.difference(lastVisit).inDays == 1) {
-        // Consecutive day
+      } else if (today.difference(lastVisitDate).inDays == 1) {
+        // Consecutive day (Yesterday vs Today)
         _currentStreak++;
       } else {
-        // Missed a day (or more)
-        _currentStreak = 1; // Reset to 1 (today counts)
+        // Missed a day (or more) - Reset to 1 (Today counts)
+        _currentStreak = 1; 
       }
       
       // Update data

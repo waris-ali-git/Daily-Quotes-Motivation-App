@@ -11,6 +11,9 @@ import 'providers/font_size_provider.dart';
 import 'services/notification_service.dart';
 import 'utils/constants.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/onboarding_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await MobileAds.instance.initialize();
@@ -23,18 +26,29 @@ void main() async {
   // Initialize font size provider
   final fontSizeProvider = FontSizeProvider();
   await fontSizeProvider.loadFontSize();
+
+  // Check Onboarding
+  final prefs = await SharedPreferences.getInstance();
+  final userName = prefs.getString('user_name');
+  final bool showOnboarding = userName == null || userName.isEmpty;
   
-  runApp(MyApp(themeProvider: themeProvider, fontSizeProvider: fontSizeProvider));
+  runApp(MyApp(
+    themeProvider: themeProvider, 
+    fontSizeProvider: fontSizeProvider,
+    showOnboarding: showOnboarding,
+  ));
 }
 
 class MyApp extends StatelessWidget {
   final ThemeProvider themeProvider;
   final FontSizeProvider fontSizeProvider;
+  final bool showOnboarding;
 
   const MyApp({
     super.key,
     required this.themeProvider,
     required this.fontSizeProvider,
+    required this.showOnboarding,
   });
 
   @override
@@ -45,10 +59,19 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
         ChangeNotifierProvider<FontSizeProvider>.value(value: fontSizeProvider),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) {
+      child: Consumer2<ThemeProvider, FontSizeProvider>(
+        builder: (context, themeProvider, fontSizeProvider, child) {
           return MaterialApp(
-            title: 'Daily Quotes',
+            title: 'Smart Quotes', // Renamed from Daily Quotes
+            builder: (context, child) {
+              final double scale = fontSizeProvider.getMultiplier();
+              return MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: TextScaler.linear(scale),
+                ),
+                child: child!,
+              );
+            },
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
                 seedColor: AppConstants.primaryColor,
@@ -59,7 +82,7 @@ class MyApp extends StatelessWidget {
               ),
               useMaterial3: true,
               brightness: Brightness.light,
-              scaffoldBackgroundColor: AppConstants.softWhite,
+              scaffoldBackgroundColor: Colors.white,
             ),
             darkTheme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
@@ -72,10 +95,10 @@ class MyApp extends StatelessWidget {
               ),
               useMaterial3: true,
               brightness: Brightness.dark,
-              scaffoldBackgroundColor: AppConstants.backgroundColor,
+              scaffoldBackgroundColor: const Color(0xFF0F2027), // Fallback to darkest gradient color
             ),
             themeMode: themeProvider.themeMode,
-            home: const HomeScreen(),
+            home: showOnboarding ? const OnboardingScreen() : const HomeScreen(),
             routes: {
               '/home': (_) => const HomeScreen(),
               '/categories': (_) => const CategoriesScreen(),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' hide ErrorWidget;
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/quote_provider.dart';
 import '../providers/font_size_provider.dart';
 import '../services/share_service.dart';
@@ -17,7 +18,8 @@ import '../widgets/error_widget.dart';
 import 'favorites_screen.dart';
 import 'settings_screen.dart';
 import 'categories_screen.dart';
-// import 'community_screen.dart'; // Placeholder if needed
+import 'challenge_screen.dart';
+import 'journal_screen.dart';
 
 import '../utils/constants.dart';
 import '../utils/mood_analyzer.dart';
@@ -61,7 +63,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _adService.showInterstitialAd();
     }
 
-    // Restart animation
     _animationController.forward(from: 0.0);
   }
 
@@ -69,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _initBannerAd();
+    _loadUserName();
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -88,6 +90,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         provider.fetchNewQuote();
       }
       provider.checkStreak();
+    });
+  }
+
+  String _userName = "";
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('user_name') ?? "Friend";
     });
   }
 
@@ -120,25 +130,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  Future<void> _pickTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null) {
-      await NotificationService().scheduleNotification(picked.hour, picked.minute);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Daily quote scheduled for ${picked.format(context)}"),
-          backgroundColor: AppConstants.primaryColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     Widget currentScreen;
@@ -147,13 +138,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         currentScreen = _buildHomeTab();
         break;
       case 1:
-        currentScreen = const FavoritesScreen();
-        break;
-      case 2:
         currentScreen = const CategoriesScreen();
         break;
+      case 2:
+        currentScreen = const ChallengeScreen();
+        break;
       case 3:
-        currentScreen = const Center(child: Text("Community Screen Placeholder"));
+        currentScreen = const JournalScreen();
         break;
       default:
         currentScreen = _buildHomeTab();
@@ -178,7 +169,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             Column(
               children: [
                 Expanded(child: currentScreen),
-
                 if (_isAdLoaded)
                   Container(
                     width: _bannerAd.size.width.toDouble(),
@@ -188,7 +178,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ),
               ],
             ),
-
             if (_showImageGenerator)
               Positioned.fill(
                 child: BackdropFilter(
@@ -198,7 +187,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ),
                 ),
               ),
-
             if (_showImageGenerator)
               Consumer<QuoteProvider>(
                 builder: (context, provider, child) {
@@ -225,26 +213,33 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   PreferredSizeWidget _buildHomeAppBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AppBar(
       title: Row(
         children: [
+          // Simplified accent bar with subtle gradient
           Container(
-            width: 4,
-            height: 24,
+            width: 3,
+            height: 20,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: AppConstants.pureGoldGradient,
+                colors: isDark
+                    ? [Colors.white.withOpacity(0.8), Colors.white.withOpacity(0.4)]
+                    : AppConstants.pureGoldGradient,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Text(
-            'Motivation',
+            'Smart Quotes',
             style: GoogleFonts.inter(
-              fontWeight: FontWeight.w700,
-              fontSize: 22,
-              letterSpacing: -0.5,
+              fontWeight: FontWeight.w600,
+              fontSize: 20,
+              letterSpacing: -0.3,
             ),
           ),
         ],
@@ -253,42 +248,49 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       elevation: 0,
       backgroundColor: Colors.transparent,
       actions: [
+        // Refined streak badge
         Consumer<QuoteProvider>(
           builder: (context, provider, child) {
             return InkWell(
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                   SnackBar(
-                     content: Text(TimeHelper.getStreakMessage(provider.currentStreak)),
-                     backgroundColor: AppConstants.secondaryColor,
-                     duration: const Duration(seconds: 2),
-                   ),
+                  SnackBar(
+                    content: Text(TimeHelper.getStreakMessage(provider.currentStreak)),
+                    backgroundColor: isDark ? const Color(0xFF1E293B) : AppConstants.secondaryColor,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                  ),
                 );
               },
+              borderRadius: BorderRadius.circular(16),
               child: Container(
                 margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: AppConstants.pureGoldGradient,
+                  color: isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.orange.shade200,
+                    width: 1,
                   ),
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppConstants.primaryColor.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 18),
+                    Icon(
+                      Icons.local_fire_department_rounded,
+                      color: Colors.orange.shade600,
+                      size: 16,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       '${provider.currentStreak}',
                       style: GoogleFonts.inter(
-                        color: Colors.white,
+                        color: isDark ? Colors.white : Colors.orange.shade900,
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
@@ -299,20 +301,35 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             );
           },
         ),
-
+        const SizedBox(width: 4),
+        // Simplified icon buttons
         IconButton(
-          icon: const Icon(Icons.notifications_none_rounded),
-          tooltip: 'Schedule Daily Quote',
-          onPressed: () => _pickTime(context),
-        ),
-        IconButton(
-          icon: const Icon(Icons.settings_outlined),
-          tooltip: 'Settings',
+          icon: Icon(
+            Icons.favorite_border_rounded,
+            size: 22,
+          ),
+          tooltip: 'Favorites',
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+            );
           },
         ),
-        const SizedBox(width: 4),
+        IconButton(
+          icon: Icon(
+            Icons.settings_outlined,
+            size: 22,
+          ),
+          tooltip: 'Settings',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            );
+          },
+        ),
+        const SizedBox(width: 8),
       ],
     );
   }
@@ -327,13 +344,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         bool isOffline = provider.currentQuote?.author == "Offline Mode";
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
-        // --- MOOD ANALYSIS LOGIC ---
+        // Mood analysis for quote card
         List<Color> cardColors = AppConstants.deepOceanGradient;
         if (provider.currentQuote != null) {
           final mood = MoodAnalyzer.analyzeMood(provider.currentQuote!.text);
-          final moodInts = MoodAnalyzer.getMoodColors(mood);
-          cardColors = moodInts;
+          cardColors = MoodAnalyzer.getMoodColors(mood);
         }
+
+        // Simplified font scaling
+        final double scaleFactor = _getFontScale(fontSizeProvider.fontSizeLabel);
+        final double quoteSize = 28.0 * scaleFactor;
+        final double authorSize = 17.0 * scaleFactor;
 
         return Container(
           decoration: BoxDecoration(
@@ -341,13 +362,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? AppConstants.midnightDreamGradient
-                  : AppConstants.skyFlowGradient, // Or a lighter variant for light mode
+                  ? AppConstants.darkModeHomeGradient
+                  : AppConstants.lightModeHomeGradient,
             ),
           ),
           child: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: Column(
@@ -355,38 +376,56 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   children: [
                     const SizedBox(height: 80),
 
-                    // Greeting Section using TimeHelper
+                    // Refined greeting section
                     Text(
                       TimeHelper.getGreeting(),
                       style: GoogleFonts.inter(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -1,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w300,
+                        letterSpacing: -0.5,
+                        height: 1.2,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Simplified name styling - matches the app's typography
+                    Text(
+                      _userName,
+                      style: GoogleFonts.sendFlowers(
+                        fontSize: 42,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -1.5,
                         height: 1.1,
                         foreground: Paint()
                           ..shader = LinearGradient(
-                            colors: AppConstants.pureGoldGradient,
+                            colors: isDark
+                                ? AppConstants.pureGoldGradient
+                                : AppConstants.pureGoldGradient,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ).createShader(const Rect.fromLTWH(0, 0, 200, 70)),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Text(
-                      'Here\'s your daily dose of inspiration 💫',
+                      'Your daily dose of inspiration 💫',
                       style: GoogleFonts.inter(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w400,
                         color: isDark ? Colors.white60 : Colors.black54,
-                        height: 1.5,
+                        height: 1.4,
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 36),
 
-                    // Quote Card with DYNAMIC COLORS
+                    // Quote Card
                     if (provider.currentQuote != null)
                       QuoteCard(
                         quote: provider.currentQuote!,
                         gradientColors: cardColors,
+                        fontSize: quoteSize,
+                        authorFontSize: authorSize,
                         onFavorite: () => provider.toggleFavorite(provider.currentQuote!),
                         onShare: () => ShareService().shareQuote(
                           provider.currentQuote!.text,
@@ -402,17 +441,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         onRetry: _handleNewQuote,
                       ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
 
-                    // Action Buttons
+                    // Refined action buttons
                     Row(
                       children: [
                         Expanded(
-                          flex: 2,
                           child: _buildPrimaryButton(
                             icon: Icons.auto_awesome_rounded,
                             label: 'New Quote',
                             onPressed: _handleNewQuote,
+                            isDark: isDark,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -424,47 +463,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               _showImageGenerator = true;
                             });
                           },
+                          isDark: isDark,
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 40),
 
-                    // Quick Navigation (Categories / Challenge / Journal)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildPrimaryButton(
-                            icon: Icons.category_outlined,
-                            label: 'Categories',
-                            onPressed: () => Navigator.pushNamed(context, '/categories'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildPrimaryButton(
-                            icon: Icons.local_fire_department_outlined,
-                            label: 'Challenge',
-                            onPressed: () => Navigator.pushNamed(context, '/challenge'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildPrimaryButton(
-                            icon: Icons.edit_note_outlined,
-                            label: 'Journal',
-                            onPressed: () => Navigator.pushNamed(context, '/journal'),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Quick Stats
+                    // Refined quick stats
                     _buildQuickStats(provider, isDark),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
@@ -475,25 +484,50 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
+  // Simplified font scale helper
+  double _getFontScale(String sizeLabel) {
+    switch (sizeLabel) {
+      case 'Large':
+        return 0.95;
+      case 'Medium':
+        return 0.80;
+      case 'Small':
+        return 0.65;
+      default:
+        return 0.80;
+    }
+  }
+
   Widget _buildPrimaryButton({
     required IconData icon,
     required String label,
     required VoidCallback onPressed,
+    required bool isDark,
   }) {
     return Container(
-      height: 60,
+      height: 56,
       decoration: BoxDecoration(
+        // Subtle gradient that doesn't compete with quote card
         gradient: LinearGradient(
-          colors: AppConstants.deepOceanGradient,
+          colors: isDark
+              ? [
+            const Color(0xFF334155),
+            const Color(0xFF1E293B),
+          ]
+              : [
+            AppConstants.primaryColor.withOpacity(0.9),
+            AppConstants.primaryColor,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.primaryColor.withOpacity(0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            color: (isDark ? Colors.black : AppConstants.primaryColor)
+                .withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -501,20 +535,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: Colors.white, size: 24),
+                Icon(icon, color: Colors.white, size: 20),
                 const SizedBox(width: 10),
                 Text(
                   label,
                   style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                     color: Colors.white,
-                    letterSpacing: 0.3,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ],
@@ -528,26 +562,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildSecondaryButton({
     required IconData icon,
     required VoidCallback onPressed,
+    required bool isDark,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
-      width: 60,
-      height: 60,
+      width: 56,
+      height: 56,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: isDark
+            ? const Color(0xFF1E293B)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
               ? Colors.white.withOpacity(0.1)
-              : AppConstants.primaryColor.withOpacity(0.2),
-          width: 1.5,
+              : Colors.black.withOpacity(0.08),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -555,11 +590,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           child: Icon(
             icon,
-            color: AppConstants.primaryColor,
-            size: 24,
+            color: isDark ? Colors.white70 : AppConstants.primaryColor,
+            size: 22,
           ),
         ),
       ),
@@ -568,19 +603,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Widget _buildQuickStats(QuoteProvider provider, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: isDark
+            ? const Color(0xFF1E293B).withOpacity(0.5)
+            : Colors.white.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.05)
-              : Colors.black.withOpacity(0.05),
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.06),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
-            blurRadius: 20,
+            blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
@@ -590,21 +628,31 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           _buildStatItem(
             icon: Icons.auto_stories_rounded,
             label: 'Quotes Read',
-            value: '${_quoteCounter}',
-            color: AppConstants.primaryColor,
+            value: '$_quoteCounter',
+            color: isDark ? Colors.blue.shade300 : AppConstants.primaryColor,
             isDark: isDark,
           ),
           Container(
             width: 1,
-            height: 40,
-            color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1),
-            margin: const EdgeInsets.symmetric(horizontal: 20),
+            height: 48,
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  (isDark ? Colors.white : Colors.black).withOpacity(0.0),
+                  (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+                  (isDark ? Colors.white : Colors.black).withOpacity(0.0),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
           ),
           _buildStatItem(
             icon: Icons.favorite_rounded,
             label: 'Favorites',
             value: '${provider.favorites.length}',
-            color: AppConstants.errorColor, // Red/Pinkish
+            color: isDark ? Colors.pink.shade300 : Colors.pink.shade600,
             isDark: isDark,
           ),
         ],
@@ -623,14 +671,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -638,17 +686,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Text(
                   value,
                   style: GoogleFonts.inter(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                     color: isDark ? Colors.white : Colors.black87,
+                    letterSpacing: -0.5,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   label,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: isDark ? Colors.white60 : Colors.black54,
+                    color: isDark ? Colors.white54 : Colors.black45,
+                    letterSpacing: 0.1,
                   ),
                 ),
               ],
@@ -658,6 +709,4 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
     );
   }
-
-  // Removed unused _getGreeting() helper.
 }

@@ -22,67 +22,117 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     final all = AppConstants.quoteCategories;
     final visible = _showAll ? all : all.take(_initialCount).toList();
     final hasMore = all.length > visible.length;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: AppConstants.softWhite,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppConstants.secondaryColor),
-        title: Text(
-          'Categories',
-          style: GoogleFonts.playfairDisplay(
-            color: AppConstants.secondaryColor,
-            fontWeight: FontWeight.bold,
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? AppConstants.darkModeHomeGradient
+              : AppConstants.lightModeHomeGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
       ),
-      body: SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          iconTheme: const IconThemeData(color: AppConstants.paleGold),
+          title: Text(
+            'Categories',
+            style: GoogleFonts.playfairDisplay(
+              color: AppConstants.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 22,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(AppConstants.paddingMedium),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.paddingMedium,
+              vertical: AppConstants.paddingSmall,
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Header Card
                 Container(
-                  padding: const EdgeInsets.all(AppConstants.paddingLarge),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusXLarge),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: AppConstants.oceanTreasureGradient,
+                    borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+                    color: Colors.white.withOpacity(0.08),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.15),
+                      width: 1.5,
                     ),
-                    boxShadow: AppConstants.elevatedShadow,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text(
-                        'Browse Categories',
-                        style: GoogleFonts.montserrat(
-                          color: AppConstants.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: AppConstants.pureGoldGradient,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: AppConstants.goldGlow,
+                        ),
+                        child: const Icon(
+                          Icons.category_rounded,
+                          color: AppConstants.deepBlue,
+                          size: 24,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Pick a topic and explore inspiring quotes.',
-                        style: GoogleFonts.lato(
-                          color: AppConstants.white.withValues(alpha: 0.85),
-                          fontSize: 14,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Explore Topics',
+                              style: GoogleFonts.montserrat(
+                                color: AppConstants.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Find quotes that inspire you',
+                              style: GoogleFonts.lato(
+                                color: AppConstants.lightGray,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 18),
+
+                const SizedBox(height: 20),
+
+                // Categories Grid
                 Expanded(
                   child: GridView.builder(
                     physics: const BouncingScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 1.25,
+                      childAspectRatio: 1.1,
                       crossAxisSpacing: 14,
                       mainAxisSpacing: 14,
                     ),
@@ -90,84 +140,141 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     itemBuilder: (context, index) {
                       final title = visible[index];
                       final icon = AppConstants.categoryIcons[title] ?? Icons.star;
-                      // Use stable index from the full list for consistent gradients.
                       final stableIndex = all.indexOf(title);
                       return _buildCategoryCard(context, title, icon, stableIndex);
                     },
                   ),
                 ),
-                if (hasMore) ...[
+
+                // Show More/Less Button
+                if (hasMore || _showAll) ...[
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => setState(() => _showAll = true),
-                      icon: const Icon(Icons.grid_view_rounded),
-                      label: Text(
-                        'Browse More',
-                        style: GoogleFonts.montserrat(fontWeight: FontWeight.w800),
+                  if (!_showAll) ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: AppConstants.pureGoldGradient,
+                        ),
+                        borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppConstants.richGold.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppConstants.secondaryColor,
-                        foregroundColor: AppConstants.deepBlue,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => setState(() => _showAll = true),
+                          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.grid_view_rounded,
+                                  color: AppConstants.deepBlue,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Browse More Categories',
+                                  style: GoogleFonts.montserrat(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    color: AppConstants.deepBlue,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ] else ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => setState(() => _showAll = false),
-                      icon: const Icon(Icons.expand_less),
-                      label: Text(
-                        'Show Less',
-                        style: GoogleFonts.montserrat(fontWeight: FontWeight.w800),
+                  ] else ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                        border: Border.all(
+                          color: AppConstants.richGold.withOpacity(0.3),
+                          width: 1.5,
+                        ),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppConstants.secondaryColor,
-                        side: const BorderSide(color: AppConstants.secondaryColor),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => setState(() => _showAll = false),
+                          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.expand_less_rounded,
+                                  color: AppConstants.richGold,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Show Less',
+                                  style: GoogleFonts.montserrat(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    color: AppConstants.richGold,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
+                  const SizedBox(height: 8),
                 ],
               ],
             ),
           ),
         ),
+      ),
     );
   }
 
-  Widget _buildCategoryCard(BuildContext context, String title, IconData icon, int index) {
-    // Minimal style: solid card with subtle accent bar + icon color from category
+  Widget _buildCategoryCard(
+      BuildContext context,
+      String title,
+      IconData icon,
+      int index,
+      ) {
     final accentColor = AppConstants.categoryColors[title] ?? AppConstants.skyBlue;
 
-    return Card(
-      elevation: 3,
-      shadowColor: Colors.black.withValues(alpha: 0.10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusXLarge)),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppConstants.radiusXLarge),
-          color: AppConstants.midnightBlue,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        color: Colors.white.withOpacity(0.08),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.15),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
           onTap: () {
             Navigator.push(
               context,
@@ -176,46 +283,76 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               ),
             );
           },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Thin accent bar
-              Container(
-                width: 32,
-                height: 3,
-                decoration: BoxDecoration(
-                  color: accentColor,
-                  borderRadius: BorderRadius.circular(999),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon Container
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        accentColor.withOpacity(0.3),
+                        accentColor.withOpacity(0.1),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: accentColor.withOpacity(0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: accentColor,
+                    size: 28,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
+
+                const SizedBox(height: 12),
+
+                // Title
+                Text(
+                  title,
+                  style: GoogleFonts.montserrat(
+                    color: AppConstants.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    letterSpacing: 0.3,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: Icon(icon, color: accentColor, size: 26),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  color: AppConstants.textPrimary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 18,
-                  shadows: [
-                    const Shadow(blurRadius: 5, color: Colors.black26, offset: Offset(0, 2))
-                  ]
+
+                const SizedBox(height: 4),
+
+                // Accent Dot
+                Container(
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+// ============================================================================
+// Category Quotes Screen
+// ============================================================================
 
 class _CategoryQuotesScreen extends StatefulWidget {
   final String category;
@@ -237,131 +374,289 @@ class _CategoryQuotesScreenState extends State<_CategoryQuotesScreen> {
   }
 
   Future<List<Quote>> _load() async {
-    // Use existing ApiService method (it already fetches a list)
     final quotes = await _api.getQuotesByCategory(widget.category);
     return quotes;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppConstants.softWhite,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppConstants.secondaryColor),
-        title: Text(
-          widget.category,
-          style: GoogleFonts.playfairDisplay(color: AppConstants.secondaryColor, fontWeight: FontWeight.bold),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? AppConstants.darkModeHomeGradient
+              : AppConstants.lightModeHomeGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
       ),
-      body: FutureBuilder<List<Quote>>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppConstants.secondaryColor));
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                AppConstants.errorApiFailure,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.lato(color: AppConstants.lightGray),
-              ),
-            );
-          }
-          final items = snapshot.data ?? const <Quote>[];
-          if (items.isEmpty) {
-            return Center(
-              child: Text(
-                'No quotes found for ${widget.category}.',
-                style: GoogleFonts.lato(color: AppConstants.lightGray),
-              ),
-            );
-          }
-          return Consumer<QuoteProvider>(
-            builder: (context, provider, _) {
-              return RefreshIndicator(
-                color: AppConstants.secondaryColor,
-                onRefresh: () async {
-                  setState(() => _future = _load());
-                  await _future;
-                },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          iconTheme: const IconThemeData(color: AppConstants.paleGold),
+          title: Text(
+            widget.category,
+            style: GoogleFonts.playfairDisplay(
+              color: AppConstants.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 22,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        body: FutureBuilder<List<Quote>>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: AppConstants.richGold,
+                  strokeWidth: 3,
+                ),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 64,
+                      color: AppConstants.errorColor.withOpacity(0.6),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      AppConstants.errorApiFailure,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.lato(
+                        color: AppConstants.lightGray,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final items = snapshot.data ?? const <Quote>[];
+
+            if (items.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search_off_rounded,
+                      size: 64,
+                      color: AppConstants.mediumGray,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No quotes found for ${widget.category}',
+                      style: GoogleFonts.lato(
+                        color: AppConstants.lightGray,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Consumer<QuoteProvider>(
+              builder: (context, provider, _) {
+                return RefreshIndicator(
+                  color: AppConstants.richGold,
+                  backgroundColor: AppConstants.cardColor,
+                  onRefresh: () async {
+                    setState(() => _future = _load());
+                    await _future;
+                  },
                   child: ListView.builder(
+                    physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.all(16),
                     itemCount: items.length,
                     itemBuilder: (context, i) {
                       final quote = items[i];
                       final isFav = provider.favorites.any((q) => q.text == quote.text);
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: AppConstants.midnightBlue,
-                          borderRadius: BorderRadius.circular(AppConstants.radiusXLarge),
-                          border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppConstants.paddingMedium,
-                            vertical: AppConstants.paddingMedium,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '"${quote.text}"',
-                                style: GoogleFonts.lato(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  height: 1.5,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    '- ${quote.author}',
-                                    style: GoogleFonts.lato(
-                                      color: Colors.white54,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      isFav ? Icons.favorite : Icons.favorite_border,
-                                      color: isFav ? Colors.redAccent : AppConstants.secondaryColor,
-                                    ),
-                                    tooltip: isFav ? 'Remove from favorites' : 'Add to favorites',
-                                    onPressed: () {
-                                      provider.toggleFavorite(quote);
-                                      final msg = isFav
-                                          ? AppConstants.successQuoteRemoved
-                                          : AppConstants.successQuoteSaved;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text(msg)),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
+                      return _buildQuoteCard(quote, isFav, provider);
                     },
                   ),
-              );
-            },
-          );
-        },
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuoteCard(Quote quote, bool isFav, QuoteProvider provider) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.15),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        child: Stack(
+          children: [
+            // Left accent strip
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Container(
+                width: 4,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isFav
+                        ? [Colors.redAccent, Colors.red.shade700]
+                        : AppConstants.pureGoldGradient,
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 18, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Quote icon
+                  Icon(
+                    Icons.format_quote_rounded,
+                    color: AppConstants.richGold.withOpacity(0.4),
+                    size: 28,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Quote text
+                  Text(
+                    quote.text,
+                    style: GoogleFonts.playfairDisplay(
+                      color: AppConstants.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                      height: 1.5,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Divider
+                  Container(
+                    height: 1,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: AppConstants.softGoldGradient,
+                      ),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Author and favorite button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          quote.author,
+                          style: GoogleFonts.lato(
+                            color: AppConstants.paleGold,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.5,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            provider.toggleFavorite(quote);
+                            final msg = isFav
+                                ? AppConstants.successQuoteRemoved
+                                : AppConstants.successQuoteSaved;
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    Icon(
+                                      isFav ? Icons.heart_broken : Icons.favorite,
+                                      color: AppConstants.richGold,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      msg,
+                                      style: GoogleFonts.lato(
+                                        color: AppConstants.white,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                backgroundColor: AppConstants.oceanBlue,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                margin: const EdgeInsets.all(16),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_border_rounded,
+                              color: isFav ? Colors.redAccent : AppConstants.richGold,
+                              size: 22,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

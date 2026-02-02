@@ -9,9 +9,9 @@ class FontSizeProvider with ChangeNotifier {
   String get fontSizeLabel => _fontSizeLabel;
 
   // Font size multipliers
-  static const double smallMultiplier = 0.85;
-  static const double mediumMultiplier = 1.0;
-  static const double largeMultiplier = 1.25;
+  static const double smallMultiplier = 0.75;  // Was 0.85
+  static const double mediumMultiplier = 0.90; // Was 1.0
+  static const double largeMultiplier = 1.15;  // Was 1.25
 
   Future<void> loadFontSize() async {
     final prefs = await SharedPreferences.getInstance();
@@ -64,5 +64,9 @@ class FontSizeProvider with ChangeNotifier {
       default:
         return mediumMultiplier;
     }
+  }
+
+  double getScaledSize(double baseSize) {
+    return baseSize * getMultiplier();
   }
 }

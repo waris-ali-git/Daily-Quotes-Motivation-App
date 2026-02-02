@@ -16,10 +16,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Theme Colors removed in favor of AppConstants
-
   bool _notificationsEnabled = true;
-  bool _soundEnabled = false;
+  bool _isMaleVoice = true;
 
   @override
   void initState() {
@@ -31,7 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
-      _soundEnabled = prefs.getBool('soundEnabled') ?? false;
+      _isMaleVoice = prefs.getBool('isMaleVoice') ?? true;
     });
   }
 
@@ -39,459 +37,602 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notificationsEnabled', value);
     setState(() => _notificationsEnabled = value);
-    
+
     if (!value) {
-      // Cancel all notifications if disabled
       await NotificationService().cancelAll();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Notifications disabled')),
-        );
-      }
+      _showSnackbar('Notifications disabled', Icons.notifications_off);
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Notifications enabled. Schedule a time from home screen.')),
-        );
-      }
+      _showSnackbar('Notifications enabled', Icons.notifications_active);
     }
   }
 
-  Future<void> _saveSoundSetting(bool value) async {
+  Future<void> _saveVoiceSetting(bool isMale) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('soundEnabled', value);
-    setState(() => _soundEnabled = value);
+    await prefs.setBool('isMaleVoice', isMale);
+    setState(() => _isMaleVoice = isMale);
+
+    final voiceService = VoiceService();
+    await voiceService.updateVoiceSettings(isMale);
+    await voiceService.speakQuote(isMale ? "Voice set to Deep Male" : "Voice set to Female");
+  }
+
+ Future<void> _pickTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Theme(
+          data: isDark ? ThemeData.dark().copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppConstants.richGold,
+              onPrimary: Colors.black,
+              surface: const Color(0xFF1E293B),
+              onSurface: Colors.white,
+            ),
+          ) : ThemeData.light().copyWith(
+             colorScheme: ColorScheme.light(
+              primary: AppConstants.richGold,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
     
-    // Test sound if enabled
-    if (value) {
-      final voiceService = VoiceService();
-      await voiceService.speakQuote("App sounds enabled");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('App sounds enabled')),
-        );
-      }
-    } else {
-      final voiceService = VoiceService();
-      await voiceService.stop();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('App sounds disabled')),
-        );
-      }
+    if (picked != null) {
+      await NotificationService().scheduleNotification(picked.hour, picked.minute);
+      if (!context.mounted) return;
+       // Format nicely
+      final now = DateTime.now();
+      final dt = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
+      final format = TimeOfDay.fromDateTime(dt).format(context);
+      
+      _showSnackbar("Scheduled for $format", Icons.alarm);
     }
   }
 
+  void _showSnackbar(String message, IconData icon) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: AppConstants.richGold, size: 20),
+            const SizedBox(width: 12),
+            Text(
+              message,
+              style: GoogleFonts.lato(
+                color: AppConstants.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppConstants.oceanBlue,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+  
   void _showThemeDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDark = themeProvider.isDarkMode;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark 
-            ? Colors.grey[900] 
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[900]
             : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        ),
         title: Text(
           'Select Theme',
-          style: GoogleFonts.lato(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.white 
+          style: GoogleFonts.montserrat(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
                 : Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
           ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildThemeOption("Light Mode", false, isDark),
-            _buildThemeOption("Dark Mode", true, isDark),
+            _buildDialogOption("Light Mode", !isDark, () {
+              themeProvider.toggleTheme(false);
+              Navigator.pop(context);
+            }),
+            _buildDialogOption("Dark Mode", isDark, () {
+              themeProvider.toggleTheme(true);
+              Navigator.pop(context);
+            }),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildThemeOption(String theme, bool isDark, bool currentIsDark) {
-    final isSelected = (isDark && currentIsDark) || (!isDark && !currentIsDark);
-    return ListTile(
-      title: Text(
-        theme,
-        style: GoogleFonts.lato(
-          color: Theme.of(context).brightness == Brightness.dark 
-              ? Colors.white 
-              : Colors.black,
-        ),
-      ),
-      trailing: isSelected ? Icon(Icons.check, color: AppConstants.secondaryColor) : null,
-      onTap: () {
-        final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-        themeProvider.toggleTheme(isDark);
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Theme changed to $theme')),
-        );
-      },
     );
   }
 
   void _showFontSizeDialog() {
     final fontSizeProvider = Provider.of<FontSizeProvider>(context, listen: false);
     final currentSize = fontSizeProvider.fontSizeLabel;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark 
-            ? Colors.grey[900] 
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[900]
             : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        ),
         title: Text(
           'Select Font Size',
-          style: GoogleFonts.lato(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.white 
+          style: GoogleFonts.montserrat(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
                 : Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
           ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildFontSizeOption("Small", currentSize),
-            _buildFontSizeOption("Medium", currentSize),
-            _buildFontSizeOption("Large", currentSize),
+            _buildDialogOption("Small", currentSize == "Small", () {
+              fontSizeProvider.setFontSize("Small");
+              Navigator.pop(context);
+            }),
+            _buildDialogOption("Medium", currentSize == "Medium", () {
+              fontSizeProvider.setFontSize("Medium");
+              Navigator.pop(context);
+            }),
+            _buildDialogOption("Large", currentSize == "Large", () {
+              fontSizeProvider.setFontSize("Large");
+              Navigator.pop(context);
+            }),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFontSizeOption(String size, String currentSize) {
-    final isSelected = currentSize == size;
-    // Calculate font size for preview
-    double previewSize = 16.0;
-    switch (size) {
-      case "Small":
-        previewSize = 14.0;
-        break;
-      case "Medium":
-        previewSize = 16.0;
-        break;
-      case "Large":
-        previewSize = 20.0;
-        break;
-    }
-    
+  Widget _buildDialogOption(String text, bool isSelected, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
-      title: Row(
-        children: [
-          Text(
-            size,
-            style: GoogleFonts.lato(
-              color: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.white 
-                  : Colors.black,
-              fontSize: previewSize,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            'Aa',
-            style: TextStyle(
-              fontSize: previewSize,
-              color: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.white70 
-                  : Colors.black87,
-            ),
-          ),
-        ],
+      title: Text(
+        text,
+        style: GoogleFonts.lato(
+          color: isSelected
+              ? AppConstants.richGold
+              : (isDark ? Colors.white : Colors.black),
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
       ),
-      trailing: isSelected ? Icon(Icons.check, color: AppConstants.secondaryColor) : null,
-      onTap: () {
-        final fontSizeProvider = Provider.of<FontSizeProvider>(context, listen: false);
-        fontSizeProvider.setFontSize(size);
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Font size changed to $size')),
-        );
-      },
-    );
-  }
-
-  void _rateUs() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark 
-            ? Colors.grey[900] 
-            : Colors.white,
-        title: Text(
-          'Rate Us',
-          style: GoogleFonts.lato(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.white 
-                : Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Text(
-          'Thank you for using Daily Quotes Motivation App!\n\n'
-          'If you enjoy the app, please consider rating us on the Play Store.\n\n'
-          'Your feedback helps us improve!',
-          style: GoogleFonts.lato(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.white70 
-                : Colors.black87,
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Maybe Later',
-              style: GoogleFonts.lato(color: Colors.grey),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Thank you! Please rate us on Play Store.'),
-                  duration: Duration(seconds: 3),
-                ),
-              );
-            },
-            child: Text(
-              'Rate Now',
-              style: GoogleFonts.lato(color: AppConstants.secondaryColor, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPrivacyPolicy() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark 
-            ? Colors.grey[900] 
-            : Colors.white,
-        title: Text(
-          'Privacy Policy',
-          style: GoogleFonts.lato(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.white 
-                : Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: SingleChildScrollView(
-          child: Text(
-            'Daily Quotes Motivation App Privacy Policy\n\n'
-            'Last Updated: ${DateTime.now().year}\n\n'
-            '1. Data Collection\n'
-            'We collect minimal data necessary for app functionality. Your favorite quotes are stored locally on your device.\n\n'
-            '2. Personal Information\n'
-            'We do not collect, store, or share any personal information.\n\n'
-            '3. Third-Party Services\n'
-            'We use Google AdMob for advertisements. Please refer to Google\'s privacy policy for ad-related data collection.\n\n'
-            '4. Local Storage\n'
-            'Your favorite quotes and app preferences are stored locally on your device using SharedPreferences.\n\n'
-            '5. Contact\n'
-            'For any questions about this privacy policy, please contact us through the app store listing.',
-            style: GoogleFonts.lato(
-              color: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.white70 
-                  : Colors.black87,
-              fontSize: 14,
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Close',
-              style: GoogleFonts.lato(
-                color: Theme.of(context).brightness == Brightness.dark 
-                    ? Colors.white 
-                    : Colors.black,
-              ),
-            ),
-          ),
-        ],
-      ),
+      trailing: isSelected ? const Icon(Icons.check, color: AppConstants.richGold) : null,
+      onTap: onTap,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
-    
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppConstants.secondaryColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Settings',
-          style: GoogleFonts.playfairDisplay(color: AppConstants.secondaryColor, fontWeight: FontWeight.bold),
-        ),
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? null : Colors.white,
+        gradient: isDark
+            ? const LinearGradient(
+                colors: AppConstants.darkModeHomeGradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          const SizedBox(height: 20),
-
-          // Section 1: General
-          _buildSectionHeader("GENERAL"),
-          _buildSettingsTile(
-            icon: Icons.notifications_active_outlined,
-            title: "Daily Notifications",
-            trailing: Switch(
-              value: _notificationsEnabled,
-              activeColor: AppConstants.secondaryColor, // Gold for active thumb
-              activeTrackColor: AppConstants.secondaryColor.withOpacity(0.5),
-              inactiveThumbColor: AppConstants.textTertiary,
-              inactiveTrackColor: AppConstants.cardColor,
-              onChanged: _saveNotificationSetting,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          iconTheme: IconThemeData(color: isDark ? AppConstants.paleGold : AppConstants.darkerGold),
+          title: Text(
+            'Settings',
+            style: GoogleFonts.playfairDisplay(
+              color: isDark ? AppConstants.white : AppConstants.deepBlue,
+              fontWeight: FontWeight.w600,
+              fontSize: 22,
+              letterSpacing: 0.5,
             ),
           ),
-          _buildSettingsTile(
-            icon: Icons.volume_up_outlined,
-            title: "App Sounds",
-            trailing: Switch(
-              value: _soundEnabled,
-              activeColor: AppConstants.secondaryColor,
-              activeTrackColor: AppConstants.secondaryColor.withOpacity(0.5),
-              inactiveThumbColor: Colors.grey,
-              inactiveTrackColor: Colors.grey.shade800,
-              onChanged: _saveSoundSetting,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.alarm, color: AppConstants.paleGold),
+              tooltip: 'Schedule Notification',
+              onPressed: () => _pickTime(context),
+            )
+          ]
+        ),
+        body: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.all(20),
+          children: [
+            // Section 1: General
+            _buildSectionHeader("GENERAL"),
+            const SizedBox(height: 12),
+            _buildSettingCard(
+              icon: Icons.notifications_active_rounded,
+              title: "Daily Notifications",
+              subtitle: "Get inspired every day",
+              trailing: Switch(
+                value: _notificationsEnabled,
+                activeColor: AppConstants.richGold,
+                activeTrackColor: AppConstants.richGold.withOpacity(0.3),
+                inactiveThumbColor: AppConstants.mediumGray,
+                inactiveTrackColor: Colors.white.withOpacity(0.1),
+                onChanged: _saveNotificationSetting,
+              ),
             ),
-          ),
-
-          const SizedBox(height: 25),
-
-          // Section 2: Appearance
-          _buildSectionHeader("APPEARANCE"),
-          _buildSettingsTile(
-            icon: Icons.palette_outlined,
-            title: "Theme",
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  themeProvider.isDarkMode ? "Dark Mode" : "Light Mode",
-                  style: GoogleFonts.lato(color: AppConstants.secondaryColor),
+            
+            _buildSettingCard(
+              icon: Icons.record_voice_over_rounded,
+              title: "Voice Preference",
+              subtitle: _isMaleVoice ? "Deep Male" : "Female",
+              trailing: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const SizedBox(width: 8),
-                Icon(Icons.arrow_forward_ios, size: 16, color: AppConstants.secondaryColor),
-              ],
-            ),
-            onTap: _showThemeDialog,
-          ),
-          _buildSettingsTile(
-            icon: Icons.text_fields,
-            title: "Font Size",
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  fontSizeProvider.fontSizeLabel,
-                  style: GoogleFonts.lato(color: AppConstants.secondaryColor),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Male Toggle
+                    InkWell(
+                      onTap: () => _saveVoiceSetting(true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _isMaleVoice ? AppConstants.richGold : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text("Male", 
+                          style: GoogleFonts.lato(
+                            fontSize: 12, 
+                            fontWeight: FontWeight.bold,
+                            color: _isMaleVoice ? Colors.black : AppConstants.mediumGray
+                          )
+                        ),
+                      ),
+                    ),
+                    // Female Toggle
+                    InkWell(
+                      onTap: () => _saveVoiceSetting(false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: !_isMaleVoice ? AppConstants.richGold : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text("Female", 
+                           style: GoogleFonts.lato(
+                            fontSize: 12, 
+                            fontWeight: FontWeight.bold,
+                            color: !_isMaleVoice ? Colors.black : AppConstants.mediumGray
+                          )
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Icon(Icons.arrow_forward_ios, size: 16, color: AppConstants.secondaryColor),
-              ],
+              ),
             ),
-            onTap: _showFontSizeDialog,
-          ),
-
-          const SizedBox(height: 25),
-
-          // Section 3: Support
-          _buildSectionHeader("SUPPORT"),
-          _buildSettingsTile(
-            icon: Icons.star_outline,
-            title: "Rate Us",
-            trailing: Icon(Icons.arrow_forward_ios, size: 16, color: AppConstants.secondaryColor),
-            onTap: _rateUs,
-          ),
-          _buildSettingsTile(
-            icon: Icons.privacy_tip_outlined,
-            title: "Privacy Policy",
-            trailing: Icon(Icons.arrow_forward_ios, size: 16, color: AppConstants.secondaryColor),
-            onTap: _showPrivacyPolicy,
-          ),
-
-          const SizedBox(height: 40),
-          Center(
-            child: Text(
-              "Version 1.0.0",
-              style: GoogleFonts.lato(color: Colors.grey.withOpacity(0.5)),
+            
+            const SizedBox(height: 32),
+            
+            // Section 2: Appearance
+            _buildSectionHeader("APPEARANCE"),
+             const SizedBox(height: 12),
+             
+             _buildSettingCard(
+              icon: Icons.palette_outlined,
+              title: "Theme",
+              subtitle: themeProvider.isDarkMode ? "Dark Mode" : "Light Mode",
+              trailing: const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 18,
+                color: AppConstants.paleGold,
+              ),
+              onTap: _showThemeDialog,
             ),
-          ),
-        ],
+            
+             _buildSettingCard(
+              icon: Icons.text_fields_rounded,
+              title: "Font Size",
+              subtitle: fontSizeProvider.fontSizeLabel,
+              trailing: const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 18,
+                color: AppConstants.paleGold,
+              ),
+              onTap: _showFontSizeDialog,
+            ),
+
+
+            const SizedBox(height: 32),
+
+            // Section 3: About
+            _buildSectionHeader("ABOUT"),
+            const SizedBox(height: 12),
+            
+            _buildSettingCard(
+              icon: Icons.star_rounded,
+              title: "Rate Us",
+              subtitle: "Show some love on Play Store",
+              trailing: const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 18,
+                color: AppConstants.paleGold,
+              ),
+              onTap: () {
+                _showDialog(
+                  title: 'Rate Us',
+                  content: 'Thank you for using Smart Quotes!\n\n'
+                      'If you enjoy the app, please consider rating us on the Play Store.\n\n'
+                      'Your feedback helps us improve!',
+                  icon: Icons.star_rounded,
+                );
+              },
+            ),
+
+            _buildSettingCard(
+              icon: Icons.privacy_tip_rounded,
+              title: "Privacy Policy",
+              subtitle: "How we protect your data",
+              trailing: const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 18,
+                color: AppConstants.paleGold,
+              ),
+              onTap: () {
+                _showDialog(
+                  title: 'Privacy Policy',
+                  content: 'Smart Quotes Privacy Policy\n\n'
+                      '1. Data Collection: We collect minimal data necessary for app functionality.\n\n'
+                      '2. Local Storage: Your favorites and preferences are stored locally on your device.\n\n'
+                      '3. Third-Party Services: We use Google AdMob for advertisements.\n\n'
+                      '4. No Personal Data: We do not collect or share personal information.',
+                  icon: Icons.privacy_tip_rounded,
+                  scrollable: true,
+                );
+              },
+            ),
+
+            const SizedBox(height: 40),
+
+            // Version
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.1),
+                  ),
+                ),
+                child: Text(
+                  "Version 1.0.0",
+                  style: GoogleFonts.lato(
+                    color: AppConstants.mediumGray,
+                    fontSize: 12,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSectionHeader(String title) {
+    // Rely on Theme.of(context).brightness for consistent UI rendering 
+    // regardless of whether themeMode is System, Dark, or Light.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10, left: 5),
+      padding: const EdgeInsets.only(left: 4),
       child: Text(
         title,
         style: GoogleFonts.montserrat(
-          color: AppConstants.secondaryColor,
+          color: isDark ? AppConstants.richGold : AppConstants.darkerGold,
           fontSize: 12,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
           letterSpacing: 2.0,
         ),
       ),
     );
   }
 
-  Widget _buildSettingsTile({
+  Widget _buildSettingCard({
     required IconData icon,
     required String title,
+    required String subtitle,
     required Widget trailing,
     VoidCallback? onTap,
   }) {
+    // Rely on Theme.of(context).brightness for consistent UI rendering
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppConstants.cardColor,
-        borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+        color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+        borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
         border: Border.all(
-          color: AppConstants.surfaceColor,
+          color: isDark ? Colors.white.withOpacity(0.15) : Colors.grey.withOpacity(0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Icon
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppConstants.skyBlue.withOpacity(0.3),
+                        AppConstants.skyBlue.withOpacity(0.1),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppConstants.skyBlue.withOpacity(0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: AppConstants.skyBlue,
+                    size: 24,
+                  ),
+                ),
+
+                const SizedBox(width: 16),
+
+                // Title & Subtitle
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.montserrat(
+                          color: isDark ? AppConstants.white : AppConstants.deepBlue,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.lato(
+                          color: isDark ? AppConstants.lightGray : AppConstants.mediumGray,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // Trailing
+                trailing,
+              ],
+            ),
+          ),
         ),
       ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppConstants.primaryColor.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: AppConstants.secondaryColor, size: 20),
+    );
+  }
+
+  void _showDialog({
+    required String title,
+    required String content,
+    required IconData icon,
+    bool scrollable = false,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[900]
+            : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
         ),
-        title: Text(
-          title,
-          style: GoogleFonts.lato(
-            color: AppConstants.textPrimary,
-            fontSize: 16,
-          ),
+        title: Row(
+          children: [
+            Icon(icon, color: AppConstants.richGold, size: 28),
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: GoogleFonts.montserrat(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black,
+                fontWeight: FontWeight.w600,
+                fontSize: 20,
+              ),
+            ),
+          ],
         ),
-        trailing: trailing,
-        onTap: onTap,
+        content: scrollable
+            ? SingleChildScrollView(
+                child: Text(
+                  content,
+                  style: GoogleFonts.lato(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppConstants.lightGray
+                        : Colors.black87,
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
+              )
+            : Text(
+                content,
+                style: GoogleFonts.lato(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppConstants.lightGray
+                      : Colors.black87,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Close',
+              style: GoogleFonts.montserrat(
+                color: AppConstants.richGold,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

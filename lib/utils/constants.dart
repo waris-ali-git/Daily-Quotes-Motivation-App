@@ -16,6 +16,7 @@ class AppConstants {
   static const Color warmGold = Color(0xFFFDB833);           // Warm gold
   static const Color paleGold = Color(0xFFFEE9A0);           // Soft gold
   static const Color amberGold = Color(0xFFFFB627);          // Amber gold
+  static const Color darkerGold = Color(0xFFC58F00);         // Darker gold for light mode text
 
   // Supporting Colors
   static const Color white = Color(0xFFFFFFFF);              // Pure white
@@ -90,8 +91,8 @@ class AppConstants {
 
   // Pure Gold (Luxury)
   static const List<Color> pureGoldGradient = [
-    Color(0xFFFFD700),  // Rich gold
-    Color(0xFFFDB833),  // Warm gold
+    Color(0xFFEADB7B),  // Rich gold
+    Color(0xFFFBAE10),  // Warm gold
   ];
   // Used in: Premium features, streak badges, achievements
 
@@ -111,6 +112,20 @@ class AppConstants {
 
 
   // 🎨 ============== BLUE + GOLD HYBRID GRADIENTS ==============
+
+  // Light Mode Home Gradient (Gray -> White)
+  static const List<Color> lightModeHomeGradient = [
+    Color(0xFFE0E0E0), // Slightly Darker Gray (Top)
+    Colors.white,      // White (Bottom)
+  ];
+
+  // Dark Mode Home Gradient (Top Light -> Bottom Dark)
+  // Converting Midnight Dream to flow Top (Lighter) -> Bottom (Darker)
+  static const List<Color> darkModeHomeGradient = [
+    Color(0xFF2C5364), // Lighter Blue-Grey (Top)
+    Color(0xFF203A43), // Medium
+    Color(0xFF0F2027), // Darkest (Bottom)
+  ];
 
   // Ocean Treasure (Blue to Gold)
   static const List<Color> oceanTreasureGradient = [

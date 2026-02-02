@@ -1,5 +1,5 @@
 
-
+## *1st 7 Days wala kam complete Complete* 👌🏻
 
 # PHASE 1: Basic App (Pehla Hafte)
 ## Day 1-2: Shuruat

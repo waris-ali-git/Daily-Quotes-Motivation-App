@@ -12,9 +12,11 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppConstants.cardColor,
+        color: isDark ? AppConstants.cardColor : Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black38,
@@ -27,9 +29,9 @@ class BottomNavBar extends StatelessWidget {
         currentIndex: currentIndex,
         onTap: onTap,
         type: BottomNavigationBarType.fixed,
-        backgroundColor: AppConstants.cardColor,
-        selectedItemColor: AppConstants.secondaryColor,
-        unselectedItemColor: AppConstants.textTertiary,
+        backgroundColor: isDark ? AppConstants.cardColor : Colors.white,
+        selectedItemColor: isDark ? AppConstants.secondaryColor : AppConstants.darkerGold,
+        unselectedItemColor: isDark ? AppConstants.textTertiary : AppConstants.mediumGray,
         selectedFontSize: 12,
         unselectedFontSize: 12,
         elevation: 0,
@@ -42,11 +44,11 @@ class BottomNavBar extends StatelessWidget {
             label: 'Home',
           ),
 
-          // Favorites
+          // Categories
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
-            activeIcon: Icon(Icons.favorite),
-            label: 'Favorites',
+            icon: Icon(Icons.category_outlined),
+            activeIcon: Icon(Icons.category),
+            label: 'Categories',
           ),
 
           // Challenge
@@ -56,11 +58,11 @@ class BottomNavBar extends StatelessWidget {
             label: 'Challenge',
           ),
 
-          // Community
+          // Journal
           BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            activeIcon: Icon(Icons.people),
-            label: 'Community',
+            icon: Icon(Icons.edit_note_outlined),
+            activeIcon: Icon(Icons.edit_note),
+            label: 'Journal',
           ),
         ],
       ),
